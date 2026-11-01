@@ -42,3 +42,7 @@ app.include_router(analytics_router, prefix="/api/v1/analytics", tags=["📊 Das
 
 # 👈 ثبت مسیر نوتیفیکیشن‌ها در سیستم
 app.include_router(notifications_router, prefix="/api/v1/notifications", tags=["🔔 Notifications"])
+
+@app.get("/health", tags=["🏥 Health"])
+def health_check():
+    return {"status": "healthy", "service": "core-api"}

@@ -1,0 +1,159 @@
+version: '3.8'
+
+# ==============================================================================
+# MASTER DOCKER COMPOSE CONFIGURATION - ELEVATOR ECOSYSTEM
+# ==============================================================================
+
+services:
+  # ============================================================================
+  # 1. PostgreSQL Database Server (Dual-tenant: elevator_db & shopbot_db)
+  # ============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: elevator_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_MULTIPLE_DATABASES: "elevator_db,shopbot_db"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/docker/init-multi-postgres.sh:/docker-entrypoint-initdb.d/init-multi-postgres.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - elevator_net
+
+  # ============================================================================
+  # 2. Redis In-Memory Cache, Rate Limiting & Distributed Redlock
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: elevator_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - elevator_net
+
+  # ============================================================================
+  # 3. Core API (FastAPI Elevator Engineering & Management Backend)
+  # ============================================================================
+  core-api:
+    build:
+      context: ./services/core-api
+      dockerfile: Dockerfile
+    container_name: elevator_core_api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${CORE_DATABASE_URL:-postgresql://postgres:123456@postgres:5432/elevator_db}
+      SECRET_KEY: ${CORE_SECRET_KEY:-Elevator_Super_Secret_Key_For_JWT_Token_2026}
+      ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${CORE_TOKEN_EXPIRE_MINUTES:-10080}
+      CORS_ORIGINS: ${CORE_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://localhost:8001}
+    ports:
+      - "${CORE_API_PORT:-8001}:8000"
+    volumes:
+      - core_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"
+    networks:
+      - elevator_net
+
+  # ============================================================================
+  # 4. Bot Service & Web Storefront API (FastAPI Backend)
+  # ============================================================================
+  bot-service:
+    build:
+      context: ./services/bot-service
+      dockerfile: Dockerfile
+    container_name: elevator_bot_service
+    restart: unless-stopped
+    environment:
+      PROJECT_NAME: "ShopBot Backend & Web API"
+      API_V1_STR: "/api/v1"
+      ENVIRONMENT: "${ENVIRONMENT:-production}"
+      DEBUG: "${DEBUG:-False}"
+      SECRET_KEY: "${BOT_SECRET_KEY:-bot-service-secure-secret-key-2026}"
+      ALGORITHM: "${JWT_ALGORITHM:-HS256}"
+      ACCESS_TOKEN_EXPIRE_MINUTES: "${BOT_TOKEN_EXPIRE_MINUTES:-11520}"
+      DATABASE_URL: "${BOT_DATABASE_URL:-postgresql+asyncpg://postgres:123456@postgres:5432/shopbot_db}"
+      CORE_DATABASE_URL: "${BOT_CORE_DATABASE_URL:-postgresql+asyncpg://postgres:123456@postgres:5432/elevator_db}"
+      REDIS_URL: "${REDIS_URL:-redis://redis:6379/0}"
+      BACKEND_CORS_ORIGINS: "${BOT_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000}"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
+      BALE_BOT_TOKEN: "${BALE_BOT_TOKEN:-}"
+      BASE_WEBHOOK_URL: "${BASE_WEBHOOK_URL:-}"
+    ports:
+      - "${BOT_API_PORT:-8000}:8000"
+    volumes:
+      - bot_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"
+    networks:
+      - elevator_net
+
+  # ============================================================================
+  # 5. Web Portal (Next.js 14 Standalone Responsive PWA)
+  # ============================================================================
+  web-portal:
+    build:
+      context: ./apps/web-portal
+      dockerfile: Dockerfile
+    container_name: elevator_web_portal
+    restart: unless-stopped
+    environment:
+      NODE_ENV: "production"
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      INTERNAL_API_URL: "http://bot-service:8000"
+      NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}"
+    ports:
+      - "${WEB_PORTAL_PORT:-3000}:3000"
+    depends_on:
+      bot-service:
+        condition: service_healthy
+    networks:
+      - elevator_net
+
+# ==============================================================================
+# Persistent Named Volumes
+# ==============================================================================
+volumes:
+  postgres_data:
+    name: elevator_postgres_data
+  redis_data:
+    name: elevator_redis_data
+  core_uploads:
+    name: elevator_core_uploads
+  bot_uploads:
+    name: elevator_bot_uploads
+
+# ==============================================================================
+# Isolated Internal Bridge Network
+# ==============================================================================
+networks:
+  elevator_net:
+    name: elevator_network
+    driver: bridge
