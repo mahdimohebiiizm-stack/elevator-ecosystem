@@ -1,73 +1,74 @@
 <div align="center">
 
 <a href="https://web-portal-ivory-nine.vercel.app/" target="_blank" rel="noopener noreferrer">
-  <img src="apps/web-portal/public/images/elevator-hero-luxury.jpg" alt="Asanro Elevator Enterprise Ecosystem - Live Demo" width="100%" />
+  <img src="apps/web-portal/public/images/elevator-hero-luxury.jpg" alt="Asanro Elevator Enterprise Ecosystem - Live Demo" width="100%" style="border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);" />
 </a>
 
 <br/>
 <br/>
 
-[![Live Demo](https://img.shields.io/badge/🚀_LIVE_DEMO-web--portal--ivory--nine.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white&labelColor=0f172a)](https://web-portal-ivory-nine.vercel.app/)
-[![Vercel Deployment](https://img.shields.io/badge/Deployment-Live_on_Vercel-success?style=for-the-badge&logo=vercel&logoColor=white)](https://web-portal-ivory-nine.vercel.app/)
+# 🏢 Asanro Elevator Enterprise Ecosystem
+### Commercial-Grade, Event-Driven Monorepo Architecture
+**شرکت آسانرو اطمینان امیر کرمان | سیستم یکپارچه مهندسی، سرویس، نگهداری و استاندارد آسانسور**
 
-<p align="center">
-  <a href="https://web-portal-ivory-nine.vercel.app/" target="_blank" rel="noopener noreferrer">
-    <b>🔗 مشاهده پیش‌نمایش زنده وب‌پورتال (Live Production Preview): https://web-portal-ivory-nine.vercel.app/</b>
-  </a>
-</p>
+<br/>
+
+[![Next.js 14](https://img.shields.io/badge/Next.js_14-App_Router-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Flutter 3](https://img.shields.io/badge/Flutter_3-Cross--Platform-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/)
+[![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL_16-Dual_Engine-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Redis 7](https://img.shields.io/badge/Redis_7-Cache_&_Lock-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+[![Docker Compose](https://img.shields.io/badge/Docker-Compose_v3.8-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x_Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12_Slim-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+
+<br/>
+
+  <h3><a href="https://web-portal-ivory-nine.vercel.app/">🚀 View Live Production Demo</a></h3>
+  <p><i>Access the Customer Web Portal & Storefront</i></p>
+
+<br/>
 
 </div>
 
 ---
 
-# Asanro Elevator Enterprise Ecosystem (Monorepo)
-> **Commercial-Grade, Highly Scalable, and Secure Enterprise Architecture for "Asanro Etminan Amir Kerman" (شرکت آسانرو اطمینان امیر کرمان)**
-
-[![Live Demo](https://img.shields.io/badge/Live_Demo-web--portal--ivory--nine.vercel.app-blue?logo=vercel)](https://web-portal-ivory-nine.vercel.app/)
-[![Next.js](https://img.shields.io/badge/Next.js-14.2-black?logo=next.js)](https://nextjs.org/)
-[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
-[![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis)](https://redis.io/)
-[![Docker](https://img.shields.io/badge/Docker-Compose_v3.8-2496ED?logo=docker)](https://www.docker.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python)](https://www.python.org/)
-
----
-
 ## 1. Executive Summary & Ecosystem Overview
 
-**Asanro Etminan Amir Kerman** is a licensed elevator engineering and manufacturing enterprise in Kerman province, specializing in high-speed traction, gearless, machine-room-less (MRL), and hydraulic elevator installations, national safety certification, and 24/7 periodic maintenance contracts.
+> ### 📌 Executive Summary
+> **Asanro Etminan Amir Kerman** is a licensed elevator engineering and manufacturing enterprise in Kerman province, specializing in high-speed traction, gearless, machine-room-less (MRL), and hydraulic elevator installations, national safety certification, and 24/7 periodic maintenance contracts.
+>
+> This monorepo consolidates the entire technical operations of the firm into a single, cohesive, high-performance monorepo:
+> 
+> * **Customer Web Portal (`apps/web-portal`)**: Next.js 14 App Router Progressive Web App (PWA) with zero-CLS fluid hero slider, public parts storefront, interactive consultation workflows, and client/admin management dashboard.
+> * **Technician & Manager App (`apps/mobile-app`)**: Cross-platform Flutter mobile application used on-site by field technicians for routine elevator inspections, parachute load-testing, task tracking, and building manager check-ins.
+> * **Operational ERP Core API (`services/core-api`)**: FastAPI backend managing the engineering master data—buildings, elevator specifications, technical inspections, contracts, financial accounting, and emergency dispatch.
+> * **Storefront & Bot Service (`services/bot-service`)**: High-throughput FastAPI backend powering customer interactions across Telegram and Bale messengers, online shopping carts, payment gateway webhooks, and the Outbox Data Sync engine.
+> * **Shared Protocols & Data Sync (`shared/` & `services/bot-service/services/core_sync_service.py`)**: Real-time cross-database synchronization ensuring contract requests approved in the web portal are harmonized 1:1 with the Core Elevator App database.
 
-This monorepo unifies the entire digital footprint of the company into an end-to-end, event-driven enterprise ecosystem:
-
-* **Customer Web Portal (`apps/web-portal`)**: Next.js 14 App Router Responsive Progressive Web App (PWA) with zero-CLS fluid hero slider, public parts storefront, interactive consultation workflows, and client/admin management dashboard.
-* **Technician & Manager App (`apps/mobile-app`)**: Cross-platform Flutter mobile application used on-site by field technicians for routine elevator inspections, parachute load-testing, task tracking, and building manager check-ins.
-* **Operational ERP Core API (`services/core-api`)**: FastAPI backend managing the engineering master data—buildings, elevator specifications, technical inspections, contracts, financial accounting, and emergency dispatch.
-* **Storefront & Bot Service (`services/bot-service`)**: High-throughput FastAPI backend powering customer interactions across Telegram and Bale messengers, online shopping carts, payment gateway webhooks, and the Outbox Data Sync engine.
-* **Shared Protocols & Data Sync (`shared/` & `services/bot-service/services/core_sync_service.py`)**: Real-time cross-database synchronization ensuring contract requests approved in the web portal are harmonized 1:1 with the Core Elevator App database.
+<br/>
 
 ```mermaid
 flowchart LR
-    subgraph Clients["Presentation Layer"]
-        WP["Next.js 14 Web Portal<br/>:3000"]
-        MA["Flutter Mobile App<br/>(Technicians)"]
-        TB["Telegram / Bale Bots<br/>(Customers)"]
+    subgraph Clients["Presentation Layer (Omnichannel Clients)"]
+        WP["Next.js 14 Web Portal<br/>(Port :3000 / Vercel Edge)"]
+        MA["Flutter Mobile App<br/>(Technicians & Managers)"]
+        TB["Telegram / Bale Bots<br/>(Customer Automation)"]
     end
 
-    subgraph Gateway["Internal Network / Proxy"]
+    subgraph Gateway["Internal Network Gateway"]
         DOCKER["Docker Bridge Network<br/>(elevator_network)"]
     end
 
-    subgraph Backends["Application Services"]
+    subgraph Backends["Application Backend Tier"]
         BOT["Bot & Storefront API<br/>FastAPI (:8000)"]
         CORE["Core ERP API<br/>FastAPI (:8001)"]
-        SYNC["Core Sync Worker<br/>(Outbox Pattern)"]
+        SYNC["Core Sync Worker<br/>(Transactional Outbox)"]
     end
 
-    subgraph Persistence["Storage & Caching Layer"]
-        PG[("PostgreSQL 16<br/>Dual DB (elevator_db & shopbot_db)")]
-        RD[("Redis 7<br/>Cache & Redlock")]
+    subgraph Persistence["Storage & Caching Tier"]
+        PG[("PostgreSQL 16 Engine<br/>Dual DB (elevator_db & shopbot_db)")]
+        RD[("Redis 7 In-Memory<br/>Cache & Redlock Mutex")]
     end
 
     WP -->|HTTP / REST| DOCKER
@@ -77,25 +78,25 @@ flowchart LR
     DOCKER --> BOT
     DOCKER --> CORE
     BOT -->|Rate Limiting / Redlock| RD
-    BOT -->|AsyncPG| PG
+    BOT -->|AsyncPG Engine| PG
     CORE -->|SQLAlchemy / psycopg2| PG
-    BOT -.->|Cross-DB Sync| SYNC
+    BOT -.->|Cross-DB Event Sync| SYNC
     SYNC -->|1:1 Harmonization| CORE
 ```
 
 ---
 
-## 2. Technology Stack
+## 2. Technology Stack Matrix
 
-| Domain | Technology | Key Libraries / Modules |
+| Domain | Technology | Implementation Details & Architectural Purpose |
 | :--- | :--- | :--- |
-| **Customer Web Portal** | Next.js 14 (App Router), React 18, TypeScript | Tailwind CSS v3/v4, Lucide Icons, Vazirmatn Typography, Zustand, Axios, Standalone Output |
-| **Field Mobile Application** | Flutter 3.x, Dart 3.x | BLoC / Provider, Dio, Hive / SQLite (Offline Cache), Camera & Geolocation |
-| **Core Operational API** | Python 3.12, FastAPI, Uvicorn | SQLAlchemy 2.0, Alembic, psycopg2-binary, Pydantic v2, python-jose (JWT) |
-| **Bot Service & Storefront** | Python 3.12, FastAPI, Asyncpg | SQLAlchemy Async, Redis-py, Redlock, python-telegram-bot, aiohttp |
-| **Data Persistence** | PostgreSQL 16 Alpine | Dual Logical Databases (`elevator_db` & `shopbot_db`), Automated Initializer |
-| **Caching & Message Broker** | Redis 7 Alpine | Distributed Locking (Redlock), Token Bucket Rate Limiting, Session Management |
-| **Containerization & CI/CD** | Docker & Docker Compose v3.8 | Multi-Stage Builds, Non-root `appgroup/nonroot` security, Healthchecks |
+| **Customer Web Portal** | Next.js 14 (App Router), React 18, TypeScript | Tailwind CSS, Lucide Icons, Vazirmatn Typography, Zustand, Axios, Standalone Output |
+| **Field Mobile Application** | Flutter 3.x, Dart 3.x | BLoC / Provider Pattern, Dio Client, Hive / SQLite (Offline Cache), Camera & Geolocation |
+| **Core Operational API** | Python 3.12, FastAPI, Uvicorn | SQLAlchemy 2.0 ORM, Alembic Migrations, psycopg2-binary, Pydantic v2, python-jose (JWT) |
+| **Bot Service & Storefront** | Python 3.12, FastAPI, Asyncpg | Async SQLAlchemy, Redis-py, Redlock Mutex, python-telegram-bot, aiohttp Webhooks |
+| **Data Persistence** | PostgreSQL 16 Alpine | Dual Logical Databases (`elevator_db` & `shopbot_db`), Automated Bash Initializer |
+| **Caching & Message Broker** | Redis 7 Alpine | Distributed Locking (Redlock), Token Bucket Rate Limiting, Session State Management |
+| **Containerization & CI/CD** | Docker & Docker Compose v3.8 | Multi-Stage Builds, Non-root `appgroup/nonroot` security, Automated Healthchecks |
 
 ---
 
@@ -153,16 +154,23 @@ Elevator_Ecosystem/
 
 ---
 
-## 4. Quick Start: Local Development with Docker
+## 4. Port Mappings & Service Endpoints
 
-The entire ecosystem (PostgreSQL with dual databases, Redis, Core API, Bot Service, and Web Portal) can be launched simultaneously with a single command.
+| Service | Container Name | Host Port | Internal Port | Protocol | Local & Live Access Points |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Web Portal (Next.js)** | `elevator_web_portal` | `3000` | `3000` | HTTP | [http://localhost:3000](http://localhost:3000) <br/> **🚀 Live Demo:** [https://web-portal-ivory-nine.vercel.app/](https://web-portal-ivory-nine.vercel.app/) |
+| **Bot Service & Storefront** | `elevator_bot_service` | `8000` | `8000` | HTTP | [http://localhost:8000/api/v1/docs](http://localhost:8000/api/v1/docs) |
+| **Core Operational API** | `elevator_core_api` | `8001` | `8000` | HTTP | [http://localhost:8001/docs](http://localhost:8001/docs) |
+| **PostgreSQL Database** | `elevator_postgres` | `5432` | `5432` | TCP | `localhost:5432` (`elevator_db`, `shopbot_db`) |
+| **Redis In-Memory** | `elevator_redis` | `6379` | `6379` | TCP | `localhost:6379` |
 
-### Prerequisites
-* [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows / macOS) or `docker-ce` + `docker-compose-plugin` (Linux)
-* Git
+---
 
-### Step-by-Step Launch
+## 5. Local Development Quick Start
 
+The entire ecosystem can be bootstrapped locally in seconds using Docker Compose or executed natively for focused feature development.
+
+### Quick Start with Docker Compose
 ```powershell
 # 1. Clone the repository and navigate to root
 git clone <repository_url> Elevator_Ecosystem
@@ -175,86 +183,38 @@ Copy-Item .env.docker .env   # On Windows PowerShell
 # 3. Build and launch all services in detached mode
 docker compose up --build -d
 
-# 4. Verify running containers and health checks
+# 4. Verify running containers and health status
 docker compose ps
 ```
 
-### Operational Logs
+### Native Development Commands (Without Docker)
+
 ```powershell
-# Stream logs from all services
-docker compose logs -f
-
-# Stream logs from a specific component
-docker compose logs -f web-portal
-docker compose logs -f core-api
-docker compose logs -f bot-service
-```
-
-### Stopping the Stack
-```powershell
-# Stop all services gracefully (preserving persistent data in volumes)
-docker compose down
-
-# Stop and purge all persistent volumes (Fresh installation)
-docker compose down -v
-```
-
----
-
-## 5. Port Mappings & Service Endpoints
-
-| Service | Container Name | Host Port | Internal Port | Protocol | Local & Live Access Points |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Web Portal (Next.js)** | `elevator_web_portal` | `3000` | `3000` | HTTP | [http://localhost:3000](http://localhost:3000) <br/> **🚀 Live Demo:** [https://web-portal-ivory-nine.vercel.app/](https://web-portal-ivory-nine.vercel.app/) |
-| **Bot Service & Storefront** | `elevator_bot_service` | `8000` | `8000` | HTTP | [http://localhost:8000/api/v1/docs](http://localhost:8000/api/v1/docs) |
-| **Core Operational API** | `elevator_core_api` | `8001` | `8000` | HTTP | [http://localhost:8001/docs](http://localhost:8001/docs) |
-| **PostgreSQL Database** | `elevator_postgres` | `5432` | `5432` | TCP | `localhost:5432` (`elevator_db`, `shopbot_db`) |
-| **Redis In-Memory** | `elevator_redis` | `6379` | `6379` | TCP | `localhost:6379` |
-
----
-
-## 6. Local Development Without Docker (Native)
-
-For active feature engineering, developers can run services independently:
-
-### 1. Database & Cache Infrastructure
-```powershell
-# Spin up only PostgreSQL and Redis using Docker
+# 1. Start Database & Cache in background
 docker compose up -d postgres redis
-```
 
-### 2. Core API
-```powershell
+# 2. Start Core API (Elevator ERP)
 cd services/core-api
 python -m venv venv
-.\venv\Scripts\Activate.ps1            # Windows
-# source venv/bin/activate             # Linux/macOS
+.\venv\Scripts\Activate.ps1            # Windows (source venv/bin/activate on Linux)
 pip install -r requirements.txt
 alembic upgrade head
 uvicorn main:app --reload --port 8001
-```
 
-### 3. Bot Service & Storefront Backend
-```powershell
+# 3. Start Bot Service & Storefront Backend
 cd services/bot-service
 python -m venv venv
-.\venv\Scripts\Activate.ps1            # Windows
-# source venv/bin/activate             # Linux/macOS
+.\venv\Scripts\Activate.ps1            # Windows (source venv/bin/activate on Linux)
 pip install -r requirements.txt
 alembic upgrade head
 uvicorn main:app --reload --port 8000
-```
 
-### 4. Next.js Web Portal
-```powershell
+# 4. Start Web Portal (Next.js 14)
 cd apps/web-portal
 npm install
-npm run dev
-# Portal accessible at http://localhost:3000
-```
+npm run dev                            # http://localhost:3000
 
-### 5. Flutter Mobile App
-```powershell
+# 5. Start Mobile App (Flutter)
 cd apps/mobile-app
 flutter pub get
 flutter run
@@ -262,162 +222,337 @@ flutter run
 
 ---
 
-## 7. Production Deployment Guide
+## 6. Production Deployment: Docker on Linux VPS (Complete 5-Step Guide)
 
-### Architecture Strategy
-* **Frontend (`apps/web-portal`)**: Deploy to [Vercel](https://vercel.com/) (Edge Network CDN) or deploy as a Docker container on a Linux VPS.
-* **Backend Services (`services/*`) & Databases**: Deploy via Docker Compose on an Ubuntu 22.04/24.04 LTS VPS with Nginx Reverse Proxy and SSL (Certbot).
+This step-by-step guide walks a Systems Administrator or DevOps Engineer through deploying the entire Elevator Ecosystem monorepo on a production Ubuntu 22.04 / 24.04 LTS VPS with high availability, isolated networking, Nginx reverse proxy, and automated SSL certificates.
+
+### Step 1: Server Preparation & Docker Installation
+
+Log in to your clean Ubuntu server via SSH and prepare the operating system:
+
+```bash
+# Update and upgrade system packages
+sudo apt update && sudo apt upgrade -y
+
+# Install essential system utilities and security tools
+sudo apt install -y curl wget git ufw htop ca-certificates gnupg lsb-release
+
+# Install Docker Engine & Docker Compose via official Docker repository
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Enable Docker to run on boot and grant permissions to current user
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo usermod -aG docker $USER
+
+# Configure UFW (Uncomplicated Firewall) for Enterprise Security
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp comment 'SSH'
+sudo ufw allow 80/tcp comment 'HTTP'
+sudo ufw allow 443/tcp comment 'HTTPS'
+# Explicitly block external access to raw database ports (Docker bridges handle internal communication)
+sudo ufw deny 5432/tcp comment 'Block Postgres WAN'
+sudo ufw deny 6379/tcp comment 'Block Redis WAN'
+sudo ufw --force enable
+sudo ufw status verbose
+```
+
+> **Note:** Log out and log back in to activate the non-root Docker user group: `exit` followed by `ssh user@server-ip`.
 
 ---
 
-### Option A: Frontend on Vercel + Backends on Linux VPS
+### Step 2: Repository Acquisition & Workdir Initialization
 
-#### 1. Vercel Frontend Configuration
-* **Deployed Live Preview:** [https://web-portal-ivory-nine.vercel.app/](https://web-portal-ivory-nine.vercel.app/)
-1. Import the Git repository in Vercel.
-2. Set **Root Directory** to `apps/web-portal`.
-3. Framework Preset: **Next.js**.
-4. Configure Environment Variables in Vercel Dashboard:
-   ```env
-   NEXT_PUBLIC_API_URL=https://api.asanro.com/api/v1
-   INTERNAL_API_URL=https://api.asanro.com
-   NODE_ENV=production
-   ```
-5. Deploy. Vercel automatically generates optimized Edge routes and static assets.
+Clone the monorepo into the standard `/opt` enterprise software directory:
 
-#### 2. Linux VPS Setup (Backends & Database)
 ```bash
-# Update server packages
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y curl git ufw
+# Create and claim ownership of the application directory
+sudo mkdir -p /opt/elevator-ecosystem
+sudo chown -R $USER:$USER /opt/elevator-ecosystem
 
-# Install Docker Engine & Docker Compose Plugin
-curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker $USER
-
-# Configure Firewall
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-sudo ufw allow ssh
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw enable
-
-# Clone repository on VPS
+# Clone the repository
 git clone <repository_url> /opt/elevator-ecosystem
 cd /opt/elevator-ecosystem
 
-# Setup production environment
-cp .env.docker .env
-# Edit .env with strong production passwords & keys:
-nano .env
-
-# Run backend services in production mode
-docker compose up -d postgres redis core-api bot-service
+# Verify workspace files
+ls -la
 ```
 
-#### 3. Nginx Reverse Proxy & SSL Configuration
-Install and configure Nginx on the host VPS:
+---
+
+### Step 3: Environment Configuration (.env)
+
+Instantiate the production environment configuration from the pre-configured `.env.docker` template:
+
+```bash
+# Copy production Docker environment template
+cp .env.docker .env
+
+# Generate secure random secret keys
+CORE_KEY=$(openssl rand -hex 32)
+BOT_KEY=$(openssl rand -hex 32)
+DB_PASS=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9' | head -c 20)
+
+# Apply secure credentials to the .env file
+sed -i "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=${DB_PASS}/" .env
+sed -i "s/secure_postgres_password_2026\!/${DB_PASS}/g" .env
+sed -i "s/elev_core_prod_jwt_secret_key_.*/CORE_SECRET_KEY=${CORE_KEY}/" .env
+sed -i "s/shopbot_prod_jwt_secret_key_.*/BOT_SECRET_KEY=${BOT_KEY}/" .env
+
+# Open and customize public domains and bot tokens
+nano .env
+```
+
+Ensure the following variables are configured with your real domain:
+```env
+ENVIRONMENT=production
+DEBUG=False
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=<strong_generated_password>
+CORE_DATABASE_URL=postgresql://postgres:<strong_password>@postgres:5432/elevator_db
+BOT_DATABASE_URL=postgresql+asyncpg://postgres:<strong_password>@postgres:5432/shopbot_db
+BOT_CORE_DATABASE_URL=postgresql+asyncpg://postgres:<strong_password>@postgres:5432/elevator_db
+INTERNAL_API_URL=http://bot-service:8000
+NEXT_PUBLIC_API_URL=https://api.your-domain.com/api/v1
+```
+
+---
+
+### Step 4: Bootstrapping & Orchestrating the Ecosystem
+
+Launch the multi-container stack with automated building, healthchecking, and multi-tenant database initialization:
+
+```bash
+# Build and launch all 5 services in detached mode
+docker compose up --build -d
+
+# Check health and container statuses
+docker compose ps
+
+# Inspect logs to verify both databases (elevator_db & shopbot_db) were created
+docker compose logs postgres | grep "All databases initialized successfully"
+
+# Stream logs to ensure API services and Web Portal booted cleanly
+docker compose logs -f --tail=50
+
+# Verify Alembic migrations and run initial seeds if required
+docker compose exec core-api alembic upgrade head
+docker compose exec bot-service alembic upgrade head
+docker compose exec core-api python seed_data.py
+docker compose exec bot-service python seed_db.py
+```
+
+---
+
+### Step 5: Nginx Reverse Proxy Setup & Let's Encrypt SSL
+
+Install Nginx to act as the high-performance SSL terminator and reverse proxy, routing incoming internet traffic on ports 80/443 to the respective Docker host ports (`3000`, `8000`, and `8001`):
+
+```bash
+# Install Nginx and Certbot
+sudo apt install -y nginx certbot python3-certbot-nginx
+
+# Create the Nginx site configuration
+sudo nano /etc/nginx/sites-available/elevator-ecosystem.conf
+```
+
+Paste the following production Nginx configuration:
 
 ```nginx
-# /etc/nginx/sites-available/asanro-api.conf
+# Upstream definitions for load balancing and clarity
+upstream web_portal_upstream {
+    server 127.0.0.1:3000;
+    keepalive 32;
+}
+
+upstream bot_service_upstream {
+    server 127.0.0.1:8000;
+    keepalive 32;
+}
+
+upstream core_api_upstream {
+    server 127.0.0.1:8001;
+    keepalive 32;
+}
+
+# 1. Main Web Portal Frontend (asanro.com & www.asanro.com)
 server {
+    listen 80;
+    server_name asanro.com www.asanro.com;
+
+    client_max_body_size 50M;
+
+    # Security Headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    location / {
+        proxy_pass http://web_portal_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+
+# 2. Unified Backend APIs (api.asanro.com)
+server {
+    listen 80;
     server_name api.asanro.com;
 
-    # Bot & Storefront API (Port 8000)
-    location /api/v1/ {
-        proxy_pass http://127.0.0.1:8000;
+    client_max_body_size 100M;
+
+    # Customer Web & Bot Storefront API (/api/v1/)
+    location /api/ {
+        proxy_pass http://bot_service_upstream;
+        proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Core ERP API (Port 8001)
+    # Technician & Core Operational ERP API (/core/)
     location /core/ {
-        proxy_pass http://127.0.0.1:8001/;
+        proxy_pass http://core_api_upstream/;
+        proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Health Probes
+    location /health {
+        proxy_pass http://bot_service_upstream/health;
     }
 }
 ```
 
-Enable SSL using Let's Encrypt Certbot:
+Enable the configuration and issue SSL certificates:
+
 ```bash
-sudo apt install -y certbot python3-certbot-nginx
-sudo ln -s /etc/nginx/sites-available/asanro-api.conf /etc/nginx/sites-enabled/
+# Enable site configuration
+sudo ln -sf /etc/nginx/sites-available/elevator-ecosystem.conf /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# Test Nginx syntax
 sudo nginx -t
+
+# Reload Nginx service
 sudo systemctl reload nginx
-sudo certbot --nginx -d api.asanro.com
+
+# Obtain and install SSL certificates automatically
+sudo certbot --nginx -d asanro.com -d www.asanro.com -d api.asanro.com --non-interactive --agree-tos -m admin@asanro.com
+
+# Verify automated SSL certificate renewal timer
+sudo systemctl status certbot.timer
 ```
 
 ---
 
-### Option B: Full Monorepo Containerized on Linux VPS
+## 7. Alternative Hybrid Architecture: Frontend on Vercel
 
-If hosting both frontend and backends on a single dedicated VPS:
+If you prefer hosting the Next.js Web Portal on Vercel's global Edge CDN while running backend services on your Linux VPS:
 
+```mermaid
+flowchart LR
+    USERS["End Users (Web Browser)"] -->|HTTPS| VERCEL["Vercel Global Edge Network<br/>(apps/web-portal)"]
+    TECH["Technicians (Mobile App)"] -->|HTTPS| VPS["Linux VPS (Ubuntu 24.04)<br/>Nginx + Docker Engine"]
+    VERCEL -->|REST API /api/v1| VPS
+    VPS --> BOT_API["bot-service (:8000)"]
+    VPS --> CORE_API["core-api (:8001)"]
+```
+
+1. **Vercel Settings:**
+   * Import repository into Vercel.
+   * Root Directory: `apps/web-portal`
+   * Framework Preset: `Next.js`
+   * Environment Variables:
+     ```env
+     NEXT_PUBLIC_API_URL=https://api.your-domain.com/api/v1
+     INTERNAL_API_URL=https://api.your-domain.com
+     NODE_ENV=production
+     ```
+2. **VPS Backend Command:**
+   Run only backend infrastructure without running `web-portal` inside Docker:
+   ```bash
+   docker compose up -d postgres redis core-api bot-service
+   ```
+
+---
+
+## 8. Database Migrations, Seeding & Automated Backups
+
+### Manual Migrations
 ```bash
-cd /opt/elevator-ecosystem
-cp .env.docker .env
-# Start the full stack including web-portal
-docker compose up --build -d
-```
-
-Configure Nginx to reverse proxy port `3000` for your main domain (`asanro.com`) and port `8000`/`8001` for API subdomains.
-
----
-
-## 8. Database Migrations & Seed Data
-
-### Applying Migrations
-Both services automatically run migrations on container boot. To execute migrations manually:
-
-```powershell
-# Core API Migrations (elevator_db)
+# Migrate elevator_db schema
 docker compose exec core-api alembic upgrade head
 
-# Bot Service Migrations (shopbot_db)
+# Migrate shopbot_db schema
 docker compose exec bot-service alembic upgrade head
 ```
 
-### Seeding Initial Data
-```powershell
-# Seed Core API Admin and Building Categories
-docker compose exec core-api python seed_data.py
-
-# Seed Storefront Products and Packages
-docker compose exec bot-service python seed_db.py
-```
-
-### Database Backups (Cron Job)
-Create automated daily backups of both databases:
+### Automated Nightly Backup Script (Cron Job)
+Create a hardened database backup script on the host VPS:
 
 ```bash
+sudo mkdir -p /opt/scripts /opt/backups
+sudo nano /opt/scripts/backup-databases.sh
+```
+
+Paste the backup script:
+```bash
 #!/bin/bash
-# /opt/scripts/backup-databases.sh
+set -e
+
 BACKUP_DIR="/opt/backups"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-mkdir -p $BACKUP_DIR
+CONTAINER="elevator_postgres"
+DB_USER="postgres"
+
+mkdir -p "$BACKUP_DIR"
 
 # Backup elevator_db
-docker exec elevator_postgres pg_dump -U postgres elevator_db | gzip > "$BACKUP_DIR/elevator_db_$TIMESTAMP.sql.gz"
+docker exec "$CONTAINER" pg_dump -U "$DB_USER" elevator_db | gzip > "$BACKUP_DIR/elevator_db_$TIMESTAMP.sql.gz"
 
 # Backup shopbot_db
-docker exec elevator_postgres pg_dump -U postgres shopbot_db | gzip > "$BACKUP_DIR/shopbot_db_$TIMESTAMP.sql.gz"
+docker exec "$CONTAINER" pg_dump -U "$DB_USER" shopbot_db | gzip > "$BACKUP_DIR/shopbot_db_$TIMESTAMP.sql.gz"
 
-# Retain only last 14 days of backups
-find $BACKUP_DIR -type f -name "*.sql.gz" -mtime +14 -delete
+# Keep only the last 14 days of backups
+find "$BACKUP_DIR" -type f -name "*.sql.gz" -mtime +14 -delete
+
+echo "[$TIMESTAMP] Databases backed up successfully to $BACKUP_DIR."
+```
+
+Schedule daily execution at 03:00 AM:
+```bash
+sudo chmod +x /opt/scripts/backup-databases.sh
+(crontab -l 2>/dev/null; echo "0 3 * * * /opt/scripts/backup-databases.sh >> /var/log/db_backup.log 2>&1") | crontab -
 ```
 
 ---
 
-## 9. Security & Hardening Standards
+## 9. Security & Enterprise Hardening Standards
 
-* **Unprivileged Execution:** All containers run with non-root users (`nonroot:appgroup` UID 10001 in Python, `nextjs:nodejs` UID 1001 in Node.js).
-* **Network Isolation:** Internal communication happens across a private Docker bridge network (`elevator_net`). Only ports mapped in `docker-compose.yml` are exposed to the host.
+* **Unprivileged Execution:** All Docker containers run with non-root security contexts (`nonroot:appgroup` UID 10001 in Python, `nextjs:nodejs` UID 1001 in Node.js).
+* **Network Isolation:** Internal service communication occurs over a private Docker bridge network (`elevator_network`). Database and cache ports are firewalled from the public internet.
 * **Token Security:** Short-lived JWT access tokens (HMAC SHA-256) paired with secure HttpOnly cookies.
 * **Input Validation & Sanitization:** Strict Pydantic v2 schemas on backends and Zod validation on frontend forms.
 * **CORS Whitelisting:** Explicit origin whitelisting in FastAPI configuration preventing unauthorized cross-origin requests.
