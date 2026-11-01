@@ -32,6 +32,8 @@ export default function ContractRequestWizardPage() {
     postal_code: "",
     registration_plate: "",
     employer_national_id: "",
+    manager_name: "",
+    manager_phone: "",
     elevator_type: "کششی گیربکس (Traction Geared)",
     usage_type: "مسافری",
     stops_count: 5,
@@ -324,6 +326,45 @@ export default function ContractRequestWizardPage() {
                     className="w-full px-4 py-3 rounded-2xl border border-border text-sm text-foreground bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
                   />
                 </div>
+
+                {/* Manager / Employer Full Name */}
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">
+                    نام کارفرما / مدیر ساختمان (طرف قرارداد)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.manager_name || ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        manager_name: e.target.value,
+                      }))
+                    }
+                    placeholder="نام و نام خانوادگی طرف قرارداد (در صورت تمایل به قید در قرارداد رسمی)"
+                    className="w-full px-4 py-3 rounded-2xl border border-border text-sm text-foreground bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                  />
+                </div>
+
+                {/* Manager / Employer Phone Number */}
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">
+                    شماره تماس مستقیم کارفرما / مدیر
+                  </label>
+                  <input
+                    type="tel"
+                    dir="ltr"
+                    value={formData.manager_phone || ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        manager_phone: e.target.value,
+                      }))
+                    }
+                    placeholder="0912xxxxxxx"
+                    className="w-full px-4 py-3 rounded-2xl border border-border text-sm font-mono text-foreground bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-right"
+                  />
+                </div>
               </div>
 
               <div>
@@ -592,6 +633,20 @@ export default function ContractRequestWizardPage() {
                   <span className="text-muted-foreground block mb-1">کد ملی کارفرما / مدیر:</span>
                   <span className="font-bold text-foreground text-sm font-mono">
                     {formData.employer_national_id ? toPersianDigits(formData.employer_national_id) : "ثبت نشده (تکمیل هنگام عقد قرارداد)"}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-muted-foreground block mb-1">نام کارفرما / مدیر:</span>
+                  <span className="font-bold text-foreground text-sm">
+                    {formData.manager_name || "مطابق با حساب کاربری"}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-muted-foreground block mb-1">شماره تماس مدیر:</span>
+                  <span className="font-bold text-foreground text-sm font-mono">
+                    {formData.manager_phone ? toPersianDigits(formData.manager_phone) : "مطابق با حساب کاربری"}
                   </span>
                 </div>
 

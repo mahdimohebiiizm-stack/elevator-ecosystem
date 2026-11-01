@@ -17,10 +17,14 @@ import {
   Edit,
   SlidersHorizontal,
   ChevronDown,
+  CloudUpload,
+  Database,
+  Check,
 } from "lucide-react";
 import {
   fetchAdminContracts,
   updateAdminContract,
+  syncAdminContract,
   ServiceContractDto,
   ContractStatus,
 } from "@/lib/api/contracts";
@@ -44,6 +48,31 @@ export default function AdminContractsPage() {
     useState<ServiceContractDto | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [syncingContractId, setSyncingContractId] = useState<string | null>(null);
+
+  const handleManualSync = async (contractId: string) => {
+    setSyncingContractId(contractId);
+    try {
+      const response = await syncAdminContract(contractId);
+      const updated = response.data;
+      toast.success("همگام‌سازی با موفقیت انجام شد", {
+        description: `اطلاعات ساختمان، آسانسور و قرارداد با شماره ${updated.contract_number || "اختصاص‌یافته"} در پایگاه داده Core App ذخیره شد.`,
+      });
+      setContracts((prev) =>
+        prev.map((c) => (c.id === updated.id ? updated : c))
+      );
+      if (selectedContract && selectedContract.id === updated.id) {
+        setSelectedContract(updated);
+      }
+    } catch (error: any) {
+      toast.error("خطا در همگام‌سازی با Core App", {
+        description:
+          error?.response?.data?.detail || "برقراری ارتباط با پایگاه داده Core App با خطا مواجه شد.",
+      });
+    } finally {
+      setSyncingContractId(null);
+    }
+  };
 
   const [modalForm, setModalForm] = useState<{
     annual_price: string;
@@ -356,6 +385,7 @@ export default function AdminContractsPage() {
                 <th className="py-4 px-4">مشخصات آسانسور</th>
                 <th className="py-4 px-4">مبلغ سالیانه مصوب</th>
                 <th className="py-4 px-4">وضعیت</th>
+                <th className="py-4 px-4 text-center">همگام‌سازی Core</th>
                 <th className="py-4 px-4 text-center">عملیات</th>
               </tr>
             </thead>
@@ -480,16 +510,56 @@ export default function AdminContractsPage() {
                         </span>
                       </td>
 
-                      {/* Action Button: Review & Quote */}
+                      {/* Core App Sync Status */}
                       <td className="py-4 px-4 text-center whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenReviewModal(contract)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-xs transition-all active:scale-95 cursor-pointer"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                          <span>بررسی و قیمت‌گذاری</span>
-                        </button>
+                        {contract.sync_status === "SYNCED" ? (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span>همگام با Core App</span>
+                          </div>
+                        ) : contract.sync_status === "FAILED" ? (
+                          <div
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200"
+                            title={contract.sync_error || ""}
+                          >
+                            <AlertCircle className="w-3 h-3 text-rose-500" />
+                            <span>خطای همگام‌سازی</span>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                            <Database className="w-3 h-3 text-slate-400" />
+                            <span>در انتظار همگام‌سازی</span>
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Action Buttons: Review & Quote + Manual Sync */}
+                      <td className="py-4 px-4 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleManualSync(contract.id)}
+                            disabled={syncingContractId === contract.id}
+                            title="همگام‌سازی مستقیم با پایگاه داده Core App"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-bold text-xs border border-slate-200 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                          >
+                            {syncingContractId === contract.id ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                            ) : (
+                              <CloudUpload className="w-3.5 h-3.5 text-blue-600" />
+                            )}
+                            <span>همگام‌سازی Core</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenReviewModal(contract)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-xs transition-all active:scale-95 cursor-pointer"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>بررسی و قیمت‌گذاری</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -566,6 +636,48 @@ export default function AdminContractsPage() {
                 <span className="font-medium text-slate-800 leading-relaxed block">
                   {selectedContract.building_address}
                 </span>
+              </div>
+
+              {/* Core App Synchronization Box */}
+              <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-slate-500 font-bold">وضعیت همگام‌سازی Core App:</span>
+                  <span className="text-[11px] font-mono text-slate-400">
+                    {selectedContract.contract_number ? `شماره قرارداد: ${selectedContract.contract_number}` : "شماره هنوز صادر نشده"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "px-2.5 py-1 rounded-full text-[11px] font-bold border",
+                      selectedContract.sync_status === "SYNCED"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : selectedContract.sync_status === "FAILED"
+                        ? "bg-rose-50 text-rose-700 border-rose-200"
+                        : "bg-slate-100 text-slate-600 border-slate-200"
+                    )}
+                  >
+                    {selectedContract.sync_status === "SYNCED"
+                      ? "همگام با Core App"
+                      : selectedContract.sync_status === "FAILED"
+                      ? "خطا در همگام‌سازی"
+                      : "عدم همگام‌سازی"}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => handleManualSync(selectedContract.id)}
+                    disabled={syncingContractId === selectedContract.id}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                  >
+                    {syncingContractId === selectedContract.id ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <CloudUpload className="w-3.5 h-3.5" />
+                    )}
+                    <span>همگام‌سازی دستی</span>
+                  </button>
+                </div>
               </div>
             </div>
 

@@ -12,6 +12,7 @@ const vazirmatn = Vazirmatn({
   weight: ["300", "400", "500", "600", "700", "800", "900"],
   variable: "--font-vazirmatn",
   display: "swap",
+  adjustFontFallback: true,
 });
 
 export const metadata: Metadata = {

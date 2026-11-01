@@ -50,6 +50,9 @@ class ServiceContract(Base, TimestampMixin):
     postal_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     registration_plate: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     employer_national_id: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    manager_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    manager_phone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    contract_number: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, index=True)
     
     elevator_type: Mapped[str] = mapped_column(String(100), nullable=False)
     stops_count: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -76,6 +79,14 @@ class ServiceContract(Base, TimestampMixin):
         nullable=False,
         index=True,
     )
+
+    # Core App Synchronization Metadata
+    core_building_id: Mapped[Optional[uuid.UUID]] = mapped_column(nullable=True)
+    core_elevator_id: Mapped[Optional[uuid.UUID]] = mapped_column(nullable=True)
+    core_contract_id: Mapped[Optional[uuid.UUID]] = mapped_column(nullable=True)
+    synced_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    sync_status: Mapped[Optional[str]] = mapped_column(String(50), default="NOT_SYNCED", nullable=True)
+    sync_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Relationships
     user: Mapped["User"] = relationship(

@@ -18,6 +18,7 @@ from schemas.contract import (
     ContractCreate,
     ContractResponse,
 )
+from services.core_sync_service import CoreSyncService
 
 logger = logging.getLogger("shopbot_backend.routers.contracts")
 
@@ -63,6 +64,9 @@ async def create_service_contract(
         postal_code=payload.postal_code.strip() if payload.postal_code else None,
         registration_plate=payload.registration_plate.strip() if payload.registration_plate else None,
         employer_national_id=payload.employer_national_id.strip() if payload.employer_national_id else None,
+        manager_name=payload.manager_name.strip() if payload.manager_name else (current_user.name or "کارفرما"),
+        manager_phone=payload.manager_phone.strip() if payload.manager_phone else current_user.phone,
+        contract_number=f"CRT-{uuid.uuid4().hex[:8]}",
         elevator_type=elevator_type,
         stops_count=payload.stops_count,
         capacity_kg=payload.capacity_kg,
@@ -70,6 +74,7 @@ async def create_service_contract(
         usage_type=payload.usage_type or "مسافری",
         payment_frequency=payload.payment_frequency or "FLEXIBLE",
         status=ContractStatus.PENDING,
+        sync_status="NOT_SYNCED",
     )
     uow.session.add(contract)
     await uow.session.flush()
@@ -186,6 +191,12 @@ async def admin_update_contract(
         contract.registration_plate = payload.registration_plate
     if payload.employer_national_id is not None:
         contract.employer_national_id = payload.employer_national_id
+    if payload.manager_name is not None:
+        contract.manager_name = payload.manager_name
+    if payload.manager_phone is not None:
+        contract.manager_phone = payload.manager_phone
+    if payload.contract_number is not None:
+        contract.contract_number = payload.contract_number
     if payload.elevator_type is not None:
         contract.elevator_type = payload.elevator_type
     if payload.stops_count is not None:
@@ -222,6 +233,17 @@ async def admin_update_contract(
     elif payload.status is not None:
         contract.status = payload.status
 
+    # Automated Core Database Synchronization on Contract Approval
+    if contract.status == ContractStatus.ACTIVE:
+        try:
+            await CoreSyncService.sync_contract_to_core(contract, uow.session)
+            logger.info(f"Auto-synced active contract {contract.id} to Core DB")
+        except Exception as sync_exc:
+            logger.error(
+                f"Auto-sync to Core DB failed on approval for contract {contract.id}: {sync_exc}",
+                exc_info=True,
+            )
+
     # Trigger customer notification
     status_persian_map = {
         ContractStatus.PENDING: "در انتظار بررسی",
@@ -252,5 +274,45 @@ async def admin_update_contract(
         )
 
     # Re-fetch full contract
+    res = await uow.session.execute(stmt)
+    return res.scalar_one()
+
+
+@router.post(
+    "/admin/{contract_id}/sync",
+    response_model=ContractResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Admin manually push/sync service contract to Core App DB",
+    description="Forces immediate 1:1 synchronization of Building, Elevator, and Contract into elevator_db at any lifecycle stage.",
+)
+async def admin_manual_sync_contract(
+    contract_id: uuid.UUID,
+    current_admin: User = Depends(get_current_admin_user),
+    uow: IUnitOfWork = Depends(get_uow),
+) -> ContractResponse:
+    stmt = (
+        select(ServiceContract)
+        .where(ServiceContract.id == contract_id)
+        .options(joinedload(ServiceContract.user))
+    )
+    res = await uow.session.execute(stmt)
+    contract = res.scalar_one_or_none()
+    if not contract:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"قرارداد با شناسه '{contract_id}' یافت نشد.",
+        )
+
+    try:
+        await CoreSyncService.sync_contract_to_core(contract, uow.session)
+        await uow.commit()
+    except Exception as exc:
+        await uow.commit()  # Save FAILED status and error details
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"خطا در همگام‌سازی با پایگاه داده Core App: {str(exc)}",
+        )
+
+    # Reload and return updated contract
     res = await uow.session.execute(stmt)
     return res.scalar_one()

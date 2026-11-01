@@ -30,6 +30,7 @@ class Settings(BaseSettings):
 
     # Database sensitive connection string (loaded strictly from environment / .env)
     DATABASE_URL: str
+    CORE_DATABASE_URL: str = "postgresql+asyncpg://postgres:123456@localhost:5432/elevator_db"
 
     # Redis configuration
     REDIS_URL: str = "redis://localhost:6379/0"

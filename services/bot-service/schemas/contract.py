@@ -21,6 +21,8 @@ class ContractCreate(BaseModel):
     postal_code: Optional[str] = Field(None, description="Building 10-digit postal code")
     registration_plate: Optional[str] = Field(None, description="Building registration / cadastre plate")
     employer_national_id: Optional[str] = Field(None, description="Building manager / employer national ID")
+    manager_name: Optional[str] = Field(None, description="Building manager / employer official name")
+    manager_phone: Optional[str] = Field(None, description="Building manager / employer contact phone")
     
     elevator_type: str = Field(..., min_length=2, max_length=100, description="Type of elevator")
     stops_count: int = Field(..., ge=1, le=100, description="Number of stops")
@@ -35,6 +37,9 @@ class ContractAdminUpdate(BaseModel):
     postal_code: Optional[str] = None
     registration_plate: Optional[str] = None
     employer_national_id: Optional[str] = None
+    manager_name: Optional[str] = None
+    manager_phone: Optional[str] = None
+    contract_number: Optional[str] = None
     elevator_type: Optional[str] = None
     stops_count: Optional[int] = None
     capacity_kg: Optional[int] = None
@@ -58,6 +63,9 @@ class ContractResponse(BaseModel):
     postal_code: Optional[str] = None
     registration_plate: Optional[str] = None
     employer_national_id: Optional[str] = None
+    manager_name: Optional[str] = None
+    manager_phone: Optional[str] = None
+    contract_number: Optional[str] = None
     elevator_type: str
     stops_count: int
     capacity_kg: int
@@ -72,6 +80,12 @@ class ContractResponse(BaseModel):
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     status: ContractStatus
+    core_building_id: Optional[uuid.UUID] = None
+    core_elevator_id: Optional[uuid.UUID] = None
+    core_contract_id: Optional[uuid.UUID] = None
+    synced_at: Optional[datetime] = None
+    sync_status: Optional[str] = "NOT_SYNCED"
+    sync_error: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     user: Optional[ContractUserResponse] = None

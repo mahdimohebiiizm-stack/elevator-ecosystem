@@ -17,10 +17,13 @@ import {
   Edit,
   SlidersHorizontal,
   ChevronDown,
+  CloudUpload,
+  Database,
 } from "lucide-react";
 import {
   fetchAdminContracts,
   updateAdminContract,
+  syncAdminContract,
   ServiceContractDto,
   ContractStatus,
 } from "@/lib/api/contracts";
@@ -48,6 +51,31 @@ export default function AdminContractsDataGridPage() {
     useState<ServiceContractDto | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [syncingContractId, setSyncingContractId] = useState<string | null>(null);
+
+  const handleManualSync = async (contractId: string) => {
+    setSyncingContractId(contractId);
+    try {
+      const response = await syncAdminContract(contractId);
+      const updated = response.data;
+      toast.success("همگام‌سازی با موفقیت انجام شد", {
+        description: `اطلاعات ساختمان، آسانسور و قرارداد با شماره ${updated.contract_number || "اختصاص‌یافته"} در پایگاه داده Core App ذخیره شد.`,
+      });
+      setContracts((prev) =>
+        prev.map((c) => (c.id === updated.id ? updated : c))
+      );
+      if (selectedContract && selectedContract.id === updated.id) {
+        setSelectedContract(updated);
+      }
+    } catch (error: any) {
+      toast.error("خطا در همگام‌سازی با Core App", {
+        description:
+          error?.response?.data?.detail || "برقراری ارتباط با پایگاه داده Core App با خطا مواجه شد.",
+      });
+    } finally {
+      setSyncingContractId(null);
+    }
+  };
 
   // CRM Direct Message Modal State
   const [dmTargetUser, setDmTargetUser] = useState<TargetUserInfo | null>(null);
@@ -363,6 +391,7 @@ export default function AdminContractsDataGridPage() {
                 <th className="py-4 px-4">مشخصات آسانسور و آدرس</th>
                 <th className="py-4 px-4">مبلغ سالیانه</th>
                 <th className="py-4 px-4">وضعیت قرارداد</th>
+                <th className="py-4 px-4 text-center">همگام‌سازی Core</th>
                 <th className="py-4 px-4">تاریخ شروع</th>
                 <th className="py-4 px-4 text-center">عملیات مدیریت</th>
               </tr>
@@ -469,6 +498,29 @@ export default function AdminContractsDataGridPage() {
                         </span>
                       </td>
 
+                      {/* Core App Sync Status */}
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        {item.sync_status === "SYNCED" ? (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span>همگام با Core</span>
+                          </div>
+                        ) : item.sync_status === "FAILED" ? (
+                          <div
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200"
+                            title={item.sync_error || ""}
+                          >
+                            <AlertCircle className="w-3 h-3 text-rose-500" />
+                            <span>خطای همگام‌سازی</span>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-muted text-muted-foreground border border-border">
+                            <Database className="w-3 h-3 text-muted-foreground" />
+                            <span>منتظر همگام‌سازی</span>
+                          </div>
+                        )}
+                      </td>
+
                       {/* Date */}
                       <td className="py-3.5 px-4 text-muted-foreground font-mono text-[11px]">
                         {formatDate(item.start_date || item.created_at)}
@@ -477,6 +529,22 @@ export default function AdminContractsDataGridPage() {
                       {/* Actions */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center justify-center gap-2">
+                          {/* Manual Sync to Core App */}
+                          <button
+                            type="button"
+                            onClick={() => handleManualSync(item.id)}
+                            disabled={syncingContractId === item.id}
+                            title="همگام‌سازی مستقیم داده‌ها با پایگاه داده Core App"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-500/25 font-bold transition-all disabled:opacity-50 cursor-pointer"
+                          >
+                            {syncingContractId === item.id ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                            ) : (
+                              <CloudUpload className="w-3.5 h-3.5" />
+                            )}
+                            <span>همگام‌سازی Core</span>
+                          </button>
+
                           {/* Direct Message (Bot/CRM) */}
                           <button
                             type="button"
@@ -821,6 +889,52 @@ export default function AdminContractsDataGridPage() {
                       className="w-full rounded-xl border border-border bg-background p-2.5 text-xs focus:ring-2 focus:ring-accent/50 focus:border-accent font-mono"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Core App Sync Controls */}
+              <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div>
+                  <span className="font-bold text-blue-700 dark:text-blue-400 block">
+                    وضعیت پایگاه داده Core App (اپلیکیشن موبایل تکنسین‌ها):
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-mono mt-0.5 block">
+                    {selectedContract.contract_number
+                      ? `شماره قرارداد: ${selectedContract.contract_number}`
+                      : "قرارداد هنوز با Core App همگام نشده است"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "px-2.5 py-1 rounded-full text-[10px] font-bold border",
+                      selectedContract.sync_status === "SYNCED"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : selectedContract.sync_status === "FAILED"
+                        ? "bg-rose-50 text-rose-700 border-rose-200"
+                        : "bg-muted text-muted-foreground border-border"
+                    )}
+                  >
+                    {selectedContract.sync_status === "SYNCED"
+                      ? "همگام با Core App"
+                      : selectedContract.sync_status === "FAILED"
+                      ? "خطا در همگام‌سازی"
+                      : "عدم همگام‌سازی"}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => handleManualSync(selectedContract.id)}
+                    disabled={syncingContractId === selectedContract.id}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                  >
+                    {syncingContractId === selectedContract.id ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <CloudUpload className="w-3.5 h-3.5" />
+                    )}
+                    <span>همگام‌سازی دستی</span>
+                  </button>
                 </div>
               </div>
 

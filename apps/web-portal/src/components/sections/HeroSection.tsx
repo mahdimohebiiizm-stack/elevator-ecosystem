@@ -33,7 +33,7 @@ export const heroSlides: HeroSlide[] = [
     description: "کاهش ۵۰ درصدی مصرف برق با موتورهای مغناطیس دائم گیرلس و سیستم هوشمند",
   },
   {
-    image: "/images/Gemini_Generated_Image_effxgueffxgueffx(1).jpg",
+    image: "/images/Gemini_Generated_Image_effxgueffxgueffx_1.jpg",
     badge: "پشتیبانی شبانه‌روزی و اخذ گواهینامه استاندارد ادواری",
     title: "قراردادهای رسمی سرویس و",
     highlight: "نگهداری ماهانه",
@@ -105,31 +105,35 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     return () => clearInterval(timer);
   }, [slidesToRender.length]);
 
-  const slide = slidesToRender[currentSlide] || heroSlides[0];
   const phoneDisplay = contactPhone || internalPhone || "09133982695";
   const phoneHref = `tel:${phoneDisplay.replace(/\s+/g, "")}`;
 
   return (
     <section className="relative w-full bg-[#0f172a] text-white overflow-hidden py-10 md:py-14 lg:py-16" dir="rtl">
-      {/* Background Slider with Smooth Cross-Fade */}
-      <div className="absolute inset-0 z-0">
-        {slidesToRender.map((s, idx) => (
-          <div
-            key={idx}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              currentSlide === idx ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
-          >
-            <img
-              src={s.image}
-              alt={s.title}
-              className="w-full h-full object-cover object-center"
-            />
-            {/* Dark Gradient Scrim to ensure gold & white text pops with high contrast */}
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/85 to-transparent" />
-            <div className="absolute inset-0 bg-slate-950/40" />
-          </div>
-        ))}
+      {/* Background Slider with Smooth Cross-Fade and Zero Scrim Collision */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {slidesToRender.map((s, idx) => {
+          const isActive = currentSlide === idx;
+          return (
+            <div
+              key={idx}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out will-change-[opacity] ${
+                isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none invisible"
+              }`}
+              aria-hidden={!isActive}
+            >
+              <img
+                src={s.image}
+                alt={s.title}
+                className="w-full h-full object-cover object-center"
+                loading={idx === 0 ? "eager" : "lazy"}
+              />
+            </div>
+          );
+        })}
+        {/* Single Persistent Gradient Scrim - Zero dark flicker or double-exposure artifacts */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/85 to-transparent z-15 pointer-events-none" />
+        <div className="absolute inset-0 bg-slate-950/40 z-15 pointer-events-none" />
       </div>
 
       {/* Ambient lighting glows */}
@@ -140,30 +144,48 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center min-h-[380px] lg:min-h-[440px]">
           {/* Right Column: High-Impact Typography & Branding */}
-          <div className="lg:col-span-7 flex flex-col items-start text-right space-y-3.5 z-10 order-2 lg:order-1">
-            {/* Top Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-black backdrop-blur-md shadow-sm">
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-              <span>{slide.badge}</span>
+          <div className="lg:col-span-7 flex flex-col items-start text-right z-10 order-2 lg:order-1 min-h-[340px] sm:min-h-[360px] md:min-h-[380px] justify-center">
+            {/* Text Slider with Smooth Cross-Fade & Stable Layout Bounds (Zero CLS) */}
+            <div className="relative w-full min-h-[200px] sm:min-h-[220px] md:min-h-[235px]">
+              {slidesToRender.map((s, idx) => {
+                const isActive = currentSlide === idx;
+                return (
+                  <div
+                    key={idx}
+                    className={`flex flex-col items-start text-right space-y-3.5 transition-all duration-700 ease-in-out ${
+                      isActive
+                        ? "opacity-100 translate-y-0 relative z-10"
+                        : "opacity-0 translate-y-2 absolute inset-0 pointer-events-none z-0 invisible"
+                    }`}
+                    aria-hidden={!isActive}
+                  >
+                    {/* Top Badge */}
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-black backdrop-blur-md shadow-sm">
+                      <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{s.badge}</span>
+                    </div>
+
+                    {/* Main Headline */}
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-tight">
+                      {s.title} <span className="text-amber-400">{s.highlight}</span>
+                    </h1>
+
+                    {/* Gold Ribbon Box */}
+                    <div className="inline-block bg-amber-400 text-slate-950 font-black text-xs sm:text-sm tracking-[0.25em] px-3.5 py-1.5 rounded uppercase shadow-sm mt-1 mb-1 font-mono">
+                      {s.ribbon}
+                    </div>
+
+                    {/* Sub-headline */}
+                    <p className="text-lg sm:text-xl md:text-2xl font-bold text-slate-200 tracking-wide mt-1 leading-relaxed max-w-xl">
+                      {s.description}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Main Headline */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-tight transition-all duration-500">
-              {slide.title} <span className="text-amber-400">{slide.highlight}</span>
-            </h1>
-
-            {/* Gold Ribbon Box */}
-            <div className="inline-block bg-amber-400 text-slate-950 font-black text-xs sm:text-sm tracking-[0.25em] px-3.5 py-1.5 rounded uppercase shadow-sm mt-1 mb-1 font-mono">
-              {slide.ribbon}
-            </div>
-
-            {/* Sub-headline */}
-            <p className="text-lg sm:text-xl md:text-2xl font-bold text-slate-200 tracking-wide mt-1 leading-relaxed max-w-xl">
-              {slide.description}
-            </p>
-
-            {/* CTA Buttons in Gold/Amber */}
-            <div className="pt-3 flex flex-wrap items-center gap-3">
+            {/* CTA Buttons in Gold/Amber - Stably positioned below text */}
+            <div className="pt-4 flex flex-wrap items-center gap-3">
               <Link
                 href="/dashboard/contracts/request"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
@@ -206,11 +228,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
           {/* Left Column: Transparent Floating Luxury Elevator Cutout */}
           <div className="lg:col-span-5 relative flex items-end justify-center bg-transparent order-1 lg:order-2">
-            <div className="relative w-full max-w-[420px] flex items-end justify-center bg-transparent">
+            <div className="relative w-full max-w-[420px] aspect-[787/1066] max-h-[380px] sm:max-h-[440px] flex items-end justify-center bg-transparent">
               <img
                 src="/images/elevator-hero-cutout.png"
                 alt="کابین آسانسور لوکس - آسانرو اطمینان امیر کرمان"
+                width={787}
+                height={1066}
                 className="w-full h-auto object-contain max-h-[380px] sm:max-h-[440px] bg-transparent select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)] hover:scale-105 transition-transform duration-500"
+                loading="eager"
               />
             </div>
           </div>
