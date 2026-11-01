@@ -1,11 +1,11 @@
 # modules/building/router.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Union
 from uuid import UUID
 
 from core.database import get_db
-from core.security import get_current_user, get_manager_user, get_admin_user
+from core.security import get_current_user, get_manager_user, get_admin_user, get_manager_user_or_internal_service
 from modules.auth.models import User
 from . import schemas, models
 
@@ -16,7 +16,7 @@ router = APIRouter()
 def create_building(
     building: schemas.BuildingCreate, 
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_manager_user)
+    auth: Union[User, bool] = Depends(get_manager_user_or_internal_service)
 ):
     new_building = models.Building(**building.dict())
     db.add(new_building)
@@ -75,7 +75,7 @@ def add_elevator_to_building(
     building_id: UUID, 
     elevator: schemas.ElevatorCreate, 
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_manager_user)
+    auth: Union[User, bool] = Depends(get_manager_user_or_internal_service)
 ):
     db_building = db.query(models.Building).filter(models.Building.id == building_id).first()
     if not db_building:

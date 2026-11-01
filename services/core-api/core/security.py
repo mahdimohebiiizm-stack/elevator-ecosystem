@@ -1,9 +1,10 @@
 # core/security.py
 from datetime import datetime, timedelta
+from typing import Optional, Union
 from passlib.context import CryptContext
 import jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, Header, status
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from core.database import get_db
 from core.config import settings
@@ -17,6 +18,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+security_bearer = HTTPBearer(auto_error=False)
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -61,3 +63,75 @@ def get_admin_user(current_user: User = Depends(get_current_user)):
     if current_user.role != UserRoleEnum.ADMIN:
         raise HTTPException(status_code=403, detail="دسترسی غیرمجاز: این عملیات حساس فقط برای مدیر کل (ADMIN) مجاز است.")
     return current_user
+
+def _extract_token_from_header(
+    credentials: Optional[HTTPAuthorizationCredentials] = None,
+    authorization: Optional[str] = None,
+) -> Optional[str]:
+    if credentials and credentials.credentials:
+        return credentials.credentials.strip()
+    if authorization:
+        clean = authorization.strip()
+        if clean.lower().startswith("bearer "):
+            return clean[7:].strip()
+        return clean
+    return None
+
+# ۴. احراز هویت میکروسرویس‌های داخلی (Service-to-Service / S2S)
+def verify_internal_service(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_bearer),
+    authorization: Optional[str] = Header(None),
+) -> bool:
+    token = _extract_token_from_header(credentials, authorization)
+    if not token or token != settings.INTERNAL_SERVICE_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Internal Service Key",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return True
+
+# ۵. دسترسی دوگانه: یا مدیر سیستم (JWT) یا سرویس داخلی معتبر (S2S Key)
+def get_manager_user_or_internal_service(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_bearer),
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+) -> Union[User, bool]:
+    token = _extract_token_from_header(credentials, authorization)
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="توکن نامعتبر است یا منقضی شده، لطفا دوباره لاگین کنید",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # الف) بررسی کلید سرویس داخلی (Zero-Trust Bypass برای میکروسرویس‌ها)
+    if token == settings.INTERNAL_SERVICE_KEY:
+        return True
+
+    # ب) بررسی توکن JWT کاربران (Manager یا Admin)
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="توکن نامعتبر است یا منقضی شده، لطفا دوباره لاگین کنید",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except jwt.PyJWTError:
+        raise credentials_exception
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None or not user.is_active:
+        raise credentials_exception
+
+    if user.role not in [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="دسترسی غیرمجاز: فقط مدیران سیستم مجاز هستند.",
+        )
+
+    return user
+

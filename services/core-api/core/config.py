@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "Elevator_Super_Secret_Key_For_JWT_Token_2026"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
+    INTERNAL_SERVICE_KEY: str = "internal_service_super_secret"
     CORS_ORIGINS: Union[List[str], str] = [
         "http://localhost",
         "http://localhost:3000",

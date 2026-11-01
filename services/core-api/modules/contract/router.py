@@ -2,7 +2,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from core.database import get_db
-from core.security import get_manager_user, get_admin_user
+from typing import Union
+from core.security import get_manager_user, get_admin_user, get_manager_user_or_internal_service
 from modules.auth.models import User
 from . import schemas, models
 
@@ -12,7 +13,7 @@ router = APIRouter()
 def create_contract(
     contract_data: schemas.ContractCreate, 
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_manager_user)
+    auth: Union[User, bool] = Depends(get_manager_user_or_internal_service)
 ):
     new_contract = models.Contract(**contract_data.model_dump())
     db.add(new_contract)
