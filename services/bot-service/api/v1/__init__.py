@@ -1,0 +1,6 @@
+"""
+API version 1 module.
+"""
+from api.v1.router import api_v1_router
+
+__all__ = ["api_v1_router"]

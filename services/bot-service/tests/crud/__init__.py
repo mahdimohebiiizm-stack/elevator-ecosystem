@@ -1,0 +1,3 @@
+"""
+CRUD repository test suite.
+"""

@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package ai_processor;
+
+message VoiceRequest {
+    bytes audio_content = 1;
+    string mime_type = 2;
+    string language_code = 3;
+}
+
+message TextRequest {
+    string text = 1;
+    string language_code = 2;
+}
+
+message CartItem {
+    string sku = 1;
+    int32 quantity = 2;
+}
+
+message CartResponse {
+    repeated CartItem items = 1;
+    string raw_transcript = 2;
+    string detected_intent = 3;
+    float confidence_score = 4;
+}
+
+service AIProcessor {
+    rpc ProcessVoiceCommand (VoiceRequest) returns (CartResponse);
+    rpc ExtractCartFromText (TextRequest) returns (CartResponse);
+}

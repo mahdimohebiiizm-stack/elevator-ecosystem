@@ -1,0 +1,1983 @@
+
+
+==================================================
+File: .\check_users.py
+==================================================
+
+# check_users.py
+from core.database import SessionLocal
+from modules.auth.models import User, UserRoleEnum
+
+def inspect_and_fix_users():
+    db = SessionLocal()
+    try:
+        users = db.query(User).all()
+        print("\n" + "="*50)
+        print(f"📋 تعداد کل کاربران ثبت شده در دیتابیس: {len(users)}")
+        print("="*50)
+
+        for u in users:
+            print(f"👤 نام: {u.full_name} | 📱 شماره: {u.phone_number} | 🛡️ نقش: {u.role.value if hasattr(u.role, 'value') else u.role}")
+
+        print("="*50 + "\n")
+
+        # اگر کاربری با شماره لاگین شما وجود دارد، مستقیماً به ADMIN ارتقا می‌دهیم
+        # اگر شماره دیگری است، شماره‌تان را در خط زیر جایگزین کنید:
+        target_phone = "09376732409"  # یا شماره‌ای که با آن لاگین کردید
+        
+        target_user = db.query(User).filter(User.phone_number == target_phone).first()
+        if target_user:
+            target_user.role = UserRoleEnum.ADMIN
+            db.commit()
+            print(f"✅ نقش کاربر {target_user.full_name} ({target_phone}) به ADMIN تغییر یافت.")
+        else:
+            # اگر کاربری که الان لاگین هستید را می‌خواهید ادمین کنید:
+            current_logged_user = db.query(User).filter(User.full_name == "ئشایه").first()
+            if current_logged_user:
+                current_logged_user.role = UserRoleEnum.ADMIN
+                db.commit()
+                print(f"✅ کاربر '{current_logged_user.full_name}' با شماره {current_logged_user.phone_number} به ADMIN تبدیل شد.")
+
+    except Exception as e:
+        print(f"❌ خطا: {e}")
+    finally:
+        db.close()
+
+if __name__ == "__main__":
+    inspect_and_fix_users()
+
+==================================================
+File: .\export.py
+==================================================
+
+import os
+
+output_file = "project_code.txt"
+ignore_dirs = {"venv", "__pycache__", ".git", ".idea", "alembic"}
+
+with open(output_file, "w", encoding="utf-8") as outfile:
+    for root, dirs, files in os.walk("."):
+        # حذف پوشه‌های اضافی از جستجو
+        dirs[:] = [d for d in dirs if d not in ignore_dirs]
+        
+        for file in files:
+            if file.endswith(".py"): # فقط فایل‌های پایتون را می‌گیرد
+                filepath = os.path.join(root, file)
+                outfile.write(f"\n\n{'='*50}\n")
+                outfile.write(f"File: {filepath}\n")
+                outfile.write(f"{'='*50}\n\n")
+                
+                with open(filepath, "r", encoding="utf-8") as infile:
+                    outfile.write(infile.read())
+
+print("All files exported to project_code.txt")
+
+==================================================
+File: .\main.py
+==================================================
+
+# main.py
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from core.database import engine, Base
+
+# وارد کردن روت‌های ماژول‌های مختلف
+from modules.building.router import router as building_router
+from modules.service_report.router import router as report_router
+from modules.auth.router import router as auth_router
+from modules.contract.router import router as contract_router 
+from modules.finance.router import router as finance_router 
+from modules.analytics.router import router as analytics_router 
+
+# 👈 اضافه شدن مسیر نوتیفیکیشن‌ها
+from modules.analytics.notifications_router import router as notifications_router
+
+# مدل‌ها باید خوانده شوند تا جداول به صورت خودکار در دیتابیس ساخته شوند
+from modules.contract import models as contract_models 
+from modules.finance import models as finance_models 
+from modules.service_report import models as report_models
+
+# 👈 فعال‌سازی ساخت جداول برای اطمینان از ساخته شدن جدول Notifications
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title="سیستم مدیریت هوشمند آسانسور",
+    description="API های حرفه ای برای اپلیکیشن تکنسین ها و پنل مدیریت",
+    version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# دسترسی عمومی به پوشه فایل‌های آپلود شده
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# ثبت کردن مسیرهای سیستم در Swagger
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["🔑 Authentication"])
+app.include_router(building_router, prefix="/api/v1/buildings", tags=["🏢 Buildings & Elevators"])
+app.include_router(contract_router, prefix="/api/v1/contracts", tags=["📄 Contracts"]) 
+app.include_router(report_router, prefix="/api/v1/reports", tags=["🛠️ Service Reports"])
+app.include_router(finance_router, prefix="/api/v1/finance", tags=["💰 Financials"])
+app.include_router(analytics_router, prefix="/api/v1/analytics", tags=["📊 Dashboard & Analytics"])
+
+# 👈 ثبت مسیر نوتیفیکیشن‌ها در سیستم
+app.include_router(notifications_router, prefix="/api/v1/notifications", tags=["🔔 Notifications"])
+
+==================================================
+File: .\reset_db.py
+==================================================
+
+# reset_db.py
+from core.database import engine, Base
+
+# ایمپورت کردن تمام مدل‌ها الزامی است تا SQLAlchemy بداند چه جداولی را باید حذف و ایجاد کند
+from modules.auth.models import User
+from modules.building.models import Building, Elevator
+from modules.contract.models import Contract
+from modules.finance.models import Payment
+from modules.service_report.models import ServiceReport, ServicePart, ServiceMedia, TaskAssignment
+
+def reset_database():
+    print("⚠️ در حال پاک کردن تمام جداول دیتابیس...")
+    Base.metadata.drop_all(bind=engine)
+    print("✅ جداول قدیمی پاک شدند.")
+
+    print("🏗️ در حال ساخت مجدد جداول با ساختار جدید...")
+    Base.metadata.create_all(bind=engine)
+    print("✅ جداول جدید (شامل فیلد نحوه پرداخت) با موفقیت ساخته شدند.")
+
+if __name__ == "__main__":
+    confirm = input("آیا مطمئن هستید که می‌خواهید کل دیتابیس را پاک کنید؟ (y/n): ")
+    if confirm.lower() == 'y':
+        reset_database()
+    else:
+        print("عملیات لغو شد.")
+
+==================================================
+File: .\seed_data.py
+==================================================
+
+import uuid
+import jdatetime
+from core.database import SessionLocal
+from modules.building.models import Building, Elevator
+from modules.contract.models import Contract, ContractStatusEnum
+from modules.auth.models import User
+from modules.service_report.models import TaskAssignment, TaskStatusEnum, ServiceReport, ServicePart, ServiceMedia
+from modules.finance.models import Payment
+
+def seed_database():
+    db = SessionLocal()
+    
+    try:
+        admin_user = db.query(User).filter(User.phone_number == "09930046324").first()
+        if not admin_user:
+            print("❌ کاربر ادمین با شماره 09930046324 یافت نشد!")
+            return
+
+        # ==========================================
+        # رعایت ترتیب حذف (Cascade Delete) برای جلوگیری از خطای کلید خارجی
+        # ==========================================
+        db.query(TaskAssignment).delete()
+        db.query(ServiceMedia).delete()
+        db.query(ServicePart).delete()
+        db.query(ServiceReport).delete()
+        db.query(Payment).delete()
+        db.query(Contract).delete()
+        db.query(Elevator).delete()
+        db.query(Building).delete()
+        db.commit()
+
+        today_shamsi = jdatetime.date.today().strftime("%Y/%m/%d")
+
+        buildings_data = [
+            {
+                "name": "ساختمان مینو", "address": "کرمان، خیابان امام جمعه_کوچه ۲۰", "manager_name": "دکتر نخعی زاده", 
+                "elevators": [{"type": "کششی", "stops": 9, "qr_code_hash": "MINOO-01"}],
+                "contract": {"employer_name": "دکتر نخعی زاده", "employer_national_id": None, "start_date": jdatetime.date(1404, 11, 1).togregorian(), "end_date": jdatetime.date(1405, 11, 1).togregorian(), "total_amount": 348480000}
+            },
+            {
+                "name": "ساختمان نیایش", "address": "کرمان، بلوار امام رضا (ع) امام رضا دو", "manager_name": "سید حسن موسوی", 
+                "elevators": [{"type": "کششی", "stops": 8, "qr_code_hash": "NIAYESH-01"}],
+                "contract": {"employer_name": "سید حسن موسوی", "employer_national_id": "3131033479", "start_date": jdatetime.date(1405, 3, 5).togregorian(), "end_date": jdatetime.date(1406, 3, 5).togregorian(), "total_amount": 242880000}
+            },
+            {
+                "name": "ساختمان نما سنگ مشکی", "address": "کرمان، خیابان هوشنگ مرادی_کوچه ۱۱", "manager_name": "علی شریعتی", 
+                "elevators": [{"type": "کششی", "stops": 10, "qr_code_hash": "SHARIATI-01"}],
+                "contract": {"employer_name": "علی شریعتی", "employer_national_id": "3130984364", "start_date": jdatetime.date(1405, 3, 5).togregorian(), "end_date": jdatetime.date(1406, 3, 4).togregorian(), "total_amount": 485760000}
+            },
+            {
+                "name": "ساختمان میثم", "address": "کرمان، خیابان میثم شمالی_میثم ۲۴", "manager_name": "مراد حاصل رمضان نژاد", 
+                "elevators": [{"type": "کششی", "stops": 7, "qr_code_hash": "MEYSAM-01"}],
+                "contract": {"employer_name": "مراد حاصل رمضان نژاد", "employer_national_id": "3131234121", "start_date": jdatetime.date(1405, 3, 1).togregorian(), "end_date": jdatetime.date(1406, 2, 31).togregorian(), "total_amount": 340032000}
+            },
+            {
+                "name": "ساختمان یاقوت", "address": "کرمان، بلوار جمهوری اسلامی مقابل هتل پارس", "manager_name": "سید احمد رضا حسینی", 
+                "elevators": [
+                    {"type": "کششی مسافری", "stops": 10, "qr_code_hash": "YAGHOUT-01"},
+                    {"type": "کششی مسافری", "stops": 10, "qr_code_hash": "YAGHOUT-02"},
+                    {"type": "کششی بالابر", "stops": 10, "qr_code_hash": "YAGHOUT-03"}
+                ],
+                "contract": {"employer_name": "سید احمد رضا حسینی", "employer_national_id": "6339554921", "start_date": jdatetime.date(1405, 6, 1).togregorian(), "end_date": jdatetime.date(1406, 6, 1).togregorian(), "total_amount": 1235520000}
+            },
+            {
+                "name": "ساختمان سعیدی", "address": "بلوار هوشنگ مرادی کرمانی_کوچه ۲", "manager_name": "خدابخش سعیدی", 
+                "elevators": [{"type": "کششی", "stops": 5, "qr_code_hash": "SAEEDI-01"}],
+                "contract": {"employer_name": "خدابخش سعیدی", "employer_national_id": "2991397306", "start_date": jdatetime.date(1404, 11, 1).togregorian(), "end_date": jdatetime.date(1405, 11, 1).togregorian(), "total_amount": 158400000}
+            },
+            {
+                "name": "ساختمان سعید", "address": "بلوار هوانیروز_شهرک فولاد", "manager_name": "سمانه سعید", 
+                "elevators": [{"type": "کششی", "stops": 7, "qr_code_hash": "SAEED-01"}],
+                "contract": {"employer_name": "سمانه سعید", "employer_national_id": "2990391436", "start_date": jdatetime.date(1404, 9, 1).togregorian(), "end_date": jdatetime.date(1405, 8, 30).togregorian(), "total_amount": 166320000}
+            },
+            {
+                "name": "مجتمع ایلیا", "address": "کرمان، خیابان آبنوس کوچه ۱۱", "manager_name": "ایمان یوسف الهی", 
+                "elevators": [{"type": "کششی", "stops": 8, "qr_code_hash": "ILIA-01"}],
+                "contract": {"employer_name": "ایمان یوسف الهی", "employer_national_id": "2992653950", "start_date": jdatetime.date(1404, 11, 1).togregorian(), "end_date": jdatetime.date(1405, 11, 1).togregorian(), "total_amount": 198000000}
+            }
+        ]
+
+        for b_data in buildings_data:
+            new_building = Building(id=uuid.uuid4(), name=b_data["name"], address=b_data["address"], manager_name=b_data["manager_name"])
+            db.add(new_building)
+            db.flush()
+
+            for elev_data in b_data["elevators"]:
+                new_elevator = Elevator(id=uuid.uuid4(), building_id=new_building.id, type=elev_data["type"], stops=elev_data["stops"], qr_code_hash=elev_data["qr_code_hash"])
+                db.add(new_elevator)
+
+            c_data = b_data["contract"]
+            new_contract = Contract(
+                id=uuid.uuid4(), building_id=new_building.id, contract_number=f"CRT-{str(uuid.uuid4())[:8]}",
+                employer_name=c_data["employer_name"], employer_national_id=c_data["employer_national_id"],
+                start_date=c_data["start_date"], end_date=c_data["end_date"],
+                total_amount=c_data["total_amount"], monthly_fee=c_data["total_amount"] / 12,
+                total_debt=c_data["total_amount"], status=ContractStatusEnum.ACTIVE
+            )
+            db.add(new_contract)
+            db.flush()
+
+            new_assignment = TaskAssignment(
+                id=uuid.uuid4(), building_id=new_building.id, technician_id=admin_user.id,
+                assigned_by=admin_user.id, task_date_shamsi=today_shamsi, status=TaskStatusEnum.PENDING
+            )
+            db.add(new_assignment)
+
+        db.commit()
+        print(f"✅ دیتابیس با موفقیت با تقویم شمسی ({today_shamsi}) برای کاربر {admin_user.phone_number} پر شد!")
+
+    except Exception as e:
+        db.rollback()
+        print(f"❌ خطا در عملیات Seed: {e}")
+    finally:
+        db.close()
+
+if __name__ == "__main__":
+    seed_database()
+
+==================================================
+File: .\setup_admin.py
+==================================================
+
+# setup_admin.py
+from core.database import SessionLocal
+from core.security import get_password_hash
+
+# ایمپورت تمام مدل‌ها برای ثبت کامل روابط و نگاشت‌های SQLAlchemy
+from modules.contract.models import Contract
+from modules.building.models import Building, Elevator
+from modules.finance.models import Payment
+from modules.service_report.models import TaskAssignment, ServiceReport, ServicePart, ServiceMedia
+from modules.auth.models import User, UserRoleEnum
+
+def reset_and_create_admin():
+    db = SessionLocal()
+    try:
+        # ۱. حذف وابستگی‌ها و کاربر قبلی
+        old_user = db.query(User).filter(User.phone_number == "09376732409").first()
+        if old_user:
+            db.query(TaskAssignment).filter(
+                (TaskAssignment.technician_id == old_user.id) | 
+                (TaskAssignment.assigned_by == old_user.id)
+            ).delete(synchronize_session=False)
+            
+            db.query(ServiceReport).filter(ServiceReport.technician_id == old_user.id).delete(synchronize_session=False)
+            db.delete(old_user)
+            db.commit()
+            print("🗑️ کاربر قبلی با موفقیت حذف شد.")
+
+        # ۲. ایجاد یا بروزرسانی کاربر جدید mahdi
+        target_phone = "09930046324"
+        existing_new_user = db.query(User).filter(User.phone_number == target_phone).first()
+
+        hashed_pw = get_password_hash("123456")
+
+        if existing_new_user:
+            existing_new_user.full_name = "mahdi"
+            existing_new_user.hashed_password = hashed_pw
+            existing_new_user.role = UserRoleEnum.ADMIN
+            existing_new_user.is_active = True
+            print("🔄 مشخصات کاربر mahdi بروزرسانی و به ADMIN ارتقا یافت.")
+        else:
+            new_admin = User(
+                full_name="mahdi",
+                phone_number=target_phone,
+                hashed_password=hashed_pw,
+                role=UserRoleEnum.ADMIN,
+                is_active=True
+            )
+            db.add(new_admin)
+            print("✨ کاربر جدید mahdi با نقش ADMIN و رمز 123456 ساخته شد.")
+
+        db.commit()
+
+        # نمایش لیست کاربران
+        users = db.query(User).all()
+        print("\n" + "="*50)
+        print("📋 لیست کاربران فعال سیستم:")
+        for u in users:
+            print(f"👤 {u.full_name} | 📱 {u.phone_number} | 🛡️ {u.role.value if hasattr(u.role, 'value') else u.role}")
+        print("="*50 + "\n")
+
+    except Exception as e:
+        db.rollback()
+        print(f"❌ خطا: {e}")
+    finally:
+        db.close()
+
+if __name__ == "__main__":
+    reset_and_create_admin()
+
+==================================================
+File: .\core\config.py
+==================================================
+
+
+
+==================================================
+File: .\core\database.py
+==================================================
+
+# core/database.py
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+# آدرس اتصال به دیتابیس (بعدا با دیتابیس واقعی جایگزین می‌شود)
+SQLALCHEMY_DATABASE_URL = "postgresql://postgres:123456@localhost/elevator_db"
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+
+
+
+==================================================
+File: .\core\security.py
+==================================================
+
+# core/security.py
+from datetime import datetime, timedelta
+from passlib.context import CryptContext
+import jwt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+from core.database import get_db
+
+# وارد کردن مدل کاربری برای بررسی نقش
+from modules.auth.models import User, UserRoleEnum
+
+SECRET_KEY = "Elevator_Super_Secret_Key_For_JWT_Token_2026"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+# ۱. دسترسی پایه: هر کاربر لاگین شده (تکنسین، مدیر، ادمین)
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="توکن نامعتبر است یا منقضی شده، لطفا دوباره لاگین کنید",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except jwt.PyJWTError:
+        raise credentials_exception
+        
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None or not user.is_active:
+        raise credentials_exception
+    return user
+
+# ۲. دسترسی عملیاتی: فقط MANAGER و ADMIN
+def get_manager_user(current_user: User = Depends(get_current_user)):
+    if current_user.role not in [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER]:
+        raise HTTPException(status_code=403, detail="دسترسی غیرمجاز: فقط مدیران سیستم مجاز هستند.")
+    return current_user
+
+# ۳. دسترسی کامل: فقط ADMIN
+def get_admin_user(current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRoleEnum.ADMIN:
+        raise HTTPException(status_code=403, detail="دسترسی غیرمجاز: این عملیات حساس فقط برای مدیر کل (ADMIN) مجاز است.")
+    return current_user
+
+==================================================
+File: .\modules\analytics\notifications_router.py
+==================================================
+
+# modules/analytics/notifications_router.py
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Enum as SQLEnum
+# ایمپورت کردن نوع داده UUID برای هماهنگی با جدول users
+from sqlalchemy.dialects.postgresql import UUID as PGUUID 
+from core.database import get_db, Base
+from core.security import get_current_user
+from modules.auth.models import User
+import uuid
+import datetime
+import enum
+
+router = APIRouter()
+
+# 1. تعریف مدل جدول اعلانات
+class NotificationType(str, enum.Enum):
+    ASSIGN = "assign"    
+    CANCEL = "cancel"    
+    SYSTEM = "system"    
+    FINANCE = "finance"  
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    # هر دو فیلد id و user_id باید از نوع UUID باشند
+    id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False) 
+    title = Column(String, nullable=False)
+    body = Column(String, nullable=False)
+    type = Column(SQLEnum(NotificationType), default=NotificationType.SYSTEM)
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+# 2. دریافت لیست پیام‌های کاربر لاگین شده
+@router.get("/", summary="دریافت پیام‌ها و اعلانات من")
+def get_my_notifications(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    notifs = db.query(Notification).filter(
+        Notification.user_id == current_user.id
+    ).order_by(Notification.created_at.desc()).limit(30).all()
+    
+    result = []
+    for n in notifs:
+        diff = datetime.datetime.utcnow() - n.created_at
+        hours = diff.total_seconds() // 3600
+        time_str = f"{int(hours)} ساعت پیش" if hours > 0 else "لحظاتی پیش"
+
+        result.append({
+            "id": str(n.id),
+            "title": n.title,
+            "body": n.body,
+            "type": n.type.value,
+            "is_read": n.is_read,
+            "time": time_str
+        })
+    return result
+
+# 3. مارک کردن یک پیام به عنوان خوانده شده
+@router.put("/{notif_id}/read", summary="تغییر وضعیت پیام به خوانده شده")
+def mark_notification_read(
+    notif_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    notif = db.query(Notification).filter(
+        Notification.id == notif_id,
+        Notification.user_id == current_user.id
+    ).first()
+    
+    if notif:
+        notif.is_read = True
+        db.commit()
+    return {"status": "success"}
+
+# 4. تابع کمکی برای تولید اتوماتیک پیام
+def create_notification(db: Session, user_id: str, title: str, body: str, n_type: NotificationType):
+    new_notif = Notification(
+        user_id=user_id,
+        title=title,
+        body=body,
+        type=n_type
+    )
+    db.add(new_notif)
+
+==================================================
+File: .\modules\analytics\router.py
+==================================================
+
+# modules/analytics/router.py
+import jdatetime
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from sqlalchemy import func, or_, and_
+from datetime import datetime, timedelta, date
+from pydantic import BaseModel
+from uuid import UUID
+
+from core.database import get_db
+from core.security import get_manager_user, get_current_user
+from modules.auth.models import User
+
+from modules.building.models import Building
+from modules.contract.models import Contract, ContractStatusEnum, PaymentFrequencyEnum
+from modules.finance.models import Payment
+from modules.service_report.models import ServiceReport, TaskAssignment, TaskStatusEnum
+
+# 👈 ایمپورت تابع ساخت پیام
+from .notifications_router import create_notification, NotificationType
+
+router = APIRouter()
+
+class TaskAssignCreate(BaseModel):
+    building_id: UUID
+    technician_id: UUID
+    task_date_shamsi: str 
+
+class TaskExplanationCreate(BaseModel):
+    explanation: str
+
+@router.get("/summary", summary="دریافت آمار کلی داشبورد شرکت و معوقات مالی")
+def get_dashboard_summary(
+    db: Session = Depends(get_db),
+    manager: User = Depends(get_manager_user) 
+):
+    total_buildings = db.query(Building).filter(Building.is_deleted == False).count()
+    active_contracts = db.query(Contract).filter(Contract.status == ContractStatusEnum.ACTIVE).count()
+
+    total_market_debt = db.query(func.sum(Contract.total_debt)).scalar() or 0.0
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    recent_income = db.query(func.sum(Payment.amount)).filter(Payment.created_at >= thirty_days_ago).scalar() or 0.0
+
+    emergency_cases = db.query(ServiceReport).filter(ServiceReport.is_emergency == True).count()
+    recent_services = db.query(ServiceReport).filter(ServiceReport.visit_time >= thirty_days_ago).count()
+
+    overdue_contracts = []
+    all_active = db.query(Contract).filter(Contract.status == ContractStatusEnum.ACTIVE).all()
+    
+    for contract in all_active:
+        if contract.total_debt <= 0:
+            continue
+
+        last_payment = db.query(Payment).filter(Payment.contract_id == contract.id).order_by(Payment.payment_date.desc()).first()
+        base_date = last_payment.payment_date if last_payment else contract.start_date
+        
+        days_passed = (date.today() - base_date).days
+        is_overdue = False
+
+        if contract.payment_frequency == PaymentFrequencyEnum.MONTHLY and days_passed > 30:
+            is_overdue = True
+        elif contract.payment_frequency == PaymentFrequencyEnum.QUARTERLY and days_passed > 90:
+            is_overdue = True
+            
+        if is_overdue:
+            overdue_contracts.append({
+                "contract_id": str(contract.id),
+                "employer_name": contract.employer_name,
+                "building_name": contract.building.name if contract.building else "نامشخص",
+                "debt_amount": contract.total_debt,
+                "days_passed": days_passed,
+                "frequency": "ماهانه" if contract.payment_frequency == PaymentFrequencyEnum.MONTHLY else "سه‌ماهه"
+            })
+
+    return {
+        "business": {
+            "total_buildings": total_buildings,
+            "active_contracts": active_contracts
+        },
+        "finance": {
+            "total_market_debt": total_market_debt,
+            "income_last_30_days": recent_income,
+            "overdue_contracts": overdue_contracts
+        },
+        "technical": {
+            "emergency_rescues": emergency_cases,
+            "services_last_30_days": recent_services
+        }
+    }
+
+@router.post("/assign-task", summary="تخصیص ساختمان به تکنسین (مخصوص مدیر)")
+def assign_task_to_technician(
+    data: TaskAssignCreate,
+    db: Session = Depends(get_db),
+    manager: User = Depends(get_manager_user)
+):
+    contract = db.query(Contract).filter(
+        Contract.building_id == data.building_id,
+        Contract.status == ContractStatusEnum.ACTIVE
+    ).first()
+    
+    if not contract:
+        raise HTTPException(status_code=400, detail="اخطار: این ساختمان فاقد قرارداد فعال است. ارجاع کار مجاز نیست.")
+
+    active_assignments = db.query(TaskAssignment).filter(
+        TaskAssignment.building_id == data.building_id,
+        TaskAssignment.status == TaskStatusEnum.PENDING
+    ).all()
+
+    if len(active_assignments) >= 2:
+        raise HTTPException(status_code=400, detail="ظرفیت این ساختمان تکمیل است (حداکثر ۲ تکنسین).")
+
+    for assignment in active_assignments:
+        if str(assignment.technician_id) == str(data.technician_id):
+            raise HTTPException(status_code=400, detail="این تکنسین قبلاً به این ساختمان ارجاع داده شده است.")
+
+    new_task = TaskAssignment(
+        building_id=data.building_id,
+        technician_id=data.technician_id,
+        assigned_by=manager.id,
+        task_date_shamsi=data.task_date_shamsi,
+        status=TaskStatusEnum.PENDING
+    )
+    db.add(new_task)
+
+    # 👈 هوشمندسازی: ارسال پیام به تکنسین
+    building = db.query(Building).filter(Building.id == data.building_id).first()
+    b_name = building.name if building else "نامشخص"
+    create_notification(
+        db=db,
+        user_id=str(data.technician_id),
+        title="ارجاع ماموریت جدید",
+        body=f"یک سرویس دوره‌ای برای «{b_name}» در تاریخ {data.task_date_shamsi} به شما ارجاع داده شد.",
+        n_type=NotificationType.ASSIGN
+    )
+
+    db.commit()
+    return {"message": "ماموریت ارجاع داده شد و پیام به تکنسین ارسال گردید.", "status": "success"}
+
+@router.get("/technician-tasks", summary="دریافت لیست تمام ماموریت‌های معلق تکنسین")
+def get_technician_pending_tasks(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    assignments = db.query(TaskAssignment).filter(
+        TaskAssignment.technician_id == current_user.id,
+        or_(
+            TaskAssignment.status == TaskStatusEnum.PENDING,
+            and_(
+                TaskAssignment.status == TaskStatusEnum.EXPIRED_MISSED,
+                TaskAssignment.cancel_reason == None
+            )
+        )
+    ).all()
+    
+    tasks = []
+    for task in assignments:
+        building = task.building
+        if building and not building.is_deleted:
+            tasks.append({
+                "assignment_id": str(task.id),
+                "building_id": str(building.id),
+                "name": building.name,
+                "address": building.address,
+                "location_lat": building.location_lat,
+                "location_lng": building.location_lng,
+                "task_date": task.task_date_shamsi,
+                "status": task.status.value
+            })
+            
+    tasks.sort(key=lambda x: 0 if x["status"] == "EXPIRED_MISSED" else 1)
+    return tasks
+
+@router.post("/tasks/{assignment_id}/explanation", summary="ثبت توضیح برای تسک انجام‌‌نشده و بستن آن")
+def submit_task_explanation(
+    assignment_id: UUID,
+    data: TaskExplanationCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    task = db.query(TaskAssignment).filter(
+        TaskAssignment.id == assignment_id,
+        TaskAssignment.technician_id == current_user.id
+    ).first()
+    
+    if not task:
+        raise HTTPException(status_code=404, detail="ماموریت یافت نشد.")
+        
+    task.cancel_reason = data.explanation
+    task.status = TaskStatusEnum.CANCELED
+
+    # 👈 هوشمندسازی: ارسال پیام به مدیری که کار را ارجاع داده بود
+    b_name = task.building.name if task.building else "نامشخص"
+    create_notification(
+        db=db,
+        user_id=str(task.assigned_by), # پیام برای مدیر می‌رود
+        title="لغو ماموریت توسط تکنسین",
+        body=f"تکنسین ({current_user.full_name}) ماموریت «{b_name}» را با این دلیل لغو کرد: {data.explanation}",
+        n_type=NotificationType.CANCEL
+    )
+
+    db.commit()
+    return {"message": "توضیحات ثبت شد و مدیر در جریان قرار گرفت.", "status": "success"}
+
+@router.get("/assignments", summary="دریافت لیست تمام ارجاعات (مخصوص مدیر)")
+def get_all_assignments(
+    db: Session = Depends(get_db),
+    manager: User = Depends(get_manager_user)
+):
+    assignments = db.query(TaskAssignment).all()
+    result = []
+    for task in assignments:
+        result.append({
+            "id": str(task.id),
+            "building_id": str(task.building_id),
+            "technician_id": str(task.technician_id),
+            "assigned_by": str(task.assigned_by),
+            "task_date_shamsi": task.task_date_shamsi,
+            "status": task.status.value,
+            "cancel_reason": task.cancel_reason
+        })
+    return result
+
+@router.delete("/assignments/{assignment_id}", summary="حذف یک ارجاع (مخصوص مدیر)")
+def delete_assignment(
+    assignment_id: UUID,
+    db: Session = Depends(get_db),
+    manager: User = Depends(get_manager_user)
+):
+    task = db.query(TaskAssignment).filter(TaskAssignment.id == assignment_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="ارجاع مورد نظر یافت نشد")
+    
+    # 👈 هوشمندسازی: ارسال پیام به تکنسین که کارش لغو شده
+    b_name = task.building.name if task.building else "نامشخص"
+    create_notification(
+        db=db,
+        user_id=str(task.technician_id),
+        title="حذف ماموریت",
+        body=f"ماموریت شما برای ساختمان «{b_name}» توسط مدیریت شرکت لغو و حذف گردید.",
+        n_type=NotificationType.CANCEL
+    )
+
+    db.delete(task)
+    db.commit()
+    return {"message": "ارجاع لغو و پیام به تکنسین ارسال شد"}
+
+==================================================
+File: .\modules\auth\models.py
+==================================================
+
+# modules/auth/models.py
+import uuid
+import enum
+from sqlalchemy import Column, String, Boolean, Enum, DateTime
+from sqlalchemy.dialects.postgresql import UUID
+from datetime import datetime
+from core.database import Base
+
+class UserRoleEnum(enum.Enum):
+    ADMIN = "ADMIN"             # مدیر کل شرکت (دسترسی به همه چیز)
+    MANAGER = "MANAGER"         # مدیر عملیات (دسترسی به گزارش‌ها)
+    TECHNICIAN = "TECHNICIAN"   # تکنسین (دسترسی به چک‌لیست‌ها و آسانسورهای خودش)
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    full_name = Column(String, nullable=False)
+    phone_number = Column(String, unique=True, index=True, nullable=False) # شماره موبایل برای لاگین
+    hashed_password = Column(String, nullable=False) # رمز عبور هش شده (امنیت)
+    role = Column(Enum(UserRoleEnum), default=UserRoleEnum.TECHNICIAN)
+    is_active = Column(Boolean, default=True) # اگر تکنسینی اخراج شد، False می‌شود
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+
+==================================================
+File: .\modules\auth\router.py
+==================================================
+
+# modules/auth/router.py
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+from typing import List
+from uuid import UUID
+
+from core.database import get_db
+from core.security import verify_password, create_access_token, get_password_hash, get_admin_user
+from . import schemas, models
+
+router = APIRouter()
+
+@router.post("/login", response_model=schemas.Token)
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """ورود به سیستم و دریافت توکن (کارت تردد)"""
+    user = db.query(models.User).filter(models.User.phone_number == form_data.username).first()
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="شماره موبایل یا رمز عبور اشتباه است")
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="حساب کاربری شما توسط مدیریت غیرفعال شده است")
+        
+    access_token = create_access_token(data={"sub": str(user.id)})
+    
+    # <--- اضافه شدن نقش و نام به خروجی لاگین --->
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "role": user.role.value,
+        "full_name": user.full_name
+    }
+
+# ==========================================
+# بخش مدیریت پرسنل (مخصوص مدیر کل - ADMIN)
+# ==========================================
+
+@router.post("/users", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
+def create_user(
+    user_data: schemas.UserCreate, 
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(get_admin_user) # قفل امنیتی ادمین
+):
+    """ثبت پرسنل جدید (تکنسین یا مدیر) توسط ادمین"""
+    existing_user = db.query(models.User).filter(models.User.phone_number == user_data.phone_number).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="این شماره موبایل قبلاً در سیستم ثبت شده است")
+        
+    hashed_pw = get_password_hash(user_data.password)
+    new_user = models.User(
+        phone_number=user_data.phone_number,
+        full_name=user_data.full_name,
+        hashed_password=hashed_pw,
+        role=user_data.role
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+@router.get("/users", response_model=List[schemas.UserResponse])
+def get_all_users(
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(get_admin_user)
+):
+    """مشاهده لیست تمام پرسنل شرکت"""
+    return db.query(models.User).all()
+
+@router.put("/users/{user_id}", response_model=schemas.UserResponse)
+def update_user(
+    user_id: UUID,
+    user_data: schemas.UserUpdate,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(get_admin_user)
+):
+    """ویرایش اطلاعات پرسنل، تغییر نقش یا غیرفعال کردن (اخراج/مسدودسازی)"""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="کاربر یافت نشد")
+        
+    update_data = user_data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(user, key, value)
+        
+    db.commit()
+    db.refresh(user)
+    return user
+
+# ==========================================
+# ابزار توسعه‌دهنده (مسیر موقت)
+# ==========================================
+@router.put("/make-admin/{phone_number}", tags=["⚙️ Dev Tools"])
+def make_user_admin(phone_number: str, db: Session = Depends(get_db)):
+    """[مسیر موقت برای توسعه] ارتقای یک کاربر به سطح ادمین بدون نیاز به توکن"""
+    user = db.query(models.User).filter(models.User.phone_number == phone_number).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="کاربری با این شماره یافت نشد")
+    
+    user.role = models.UserRoleEnum.ADMIN
+    db.commit()
+    db.refresh(user)
+    return {"message": f"کاربر {phone_number} با موفقیت ادمین شد", "new_role": user.role}
+
+==================================================
+File: .\modules\auth\schemas.py
+==================================================
+
+# modules/auth/schemas.py
+from pydantic import BaseModel, Field
+from typing import Optional
+from uuid import UUID
+from datetime import datetime
+from .models import UserRoleEnum
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    role: str           # <--- اضافه شد
+    full_name: str      # <--- اضافه شد
+
+class UserCreate(BaseModel):
+    phone_number: str = Field(..., title="شماره موبایل")
+    full_name: str = Field(..., title="نام و نام خانوادگی")
+    password: str = Field(..., title="رمز عبور")
+    role: UserRoleEnum = Field(default=UserRoleEnum.TECHNICIAN, title="نقش کاربر")
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    role: Optional[UserRoleEnum] = None
+    is_active: Optional[bool] = Field(None, title="وضعیت فعالیت (روشن/خاموش)")
+
+class UserResponse(BaseModel):
+    id: UUID
+    full_name: str
+    phone_number: str
+    role: UserRoleEnum
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+==================================================
+File: .\modules\auth\services.py
+==================================================
+
+
+
+==================================================
+File: .\modules\building\models.py
+==================================================
+
+# modules/building/models.py
+import uuid
+from sqlalchemy import Column, String, Float, Boolean, Integer, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+from core.database import Base
+
+class Building(Base):
+    __tablename__ = "buildings"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String, nullable=False)
+    address = Column(String)
+    location_lat = Column(Float, nullable=True) # مختصات نقشه
+    location_lng = Column(Float, nullable=True)
+    manager_name = Column(String)
+    manager_phone = Column(String)
+    is_deleted = Column(Boolean, default=False)
+
+    # ارتباط با قراردادها
+    contracts = relationship("Contract", back_populates="building")
+
+class Elevator(Base):
+    __tablename__ = "elevators"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    building_id = Column(UUID(as_uuid=True), ForeignKey("buildings.id"))
+    type = Column(String) # نوع: کششی، هیدرولیک و ...
+    stops = Column(Integer) # تعداد توقف
+    qr_code_hash = Column(String, unique=True, index=True) # کد یکتای روی کابین
+
+==================================================
+File: .\modules\building\router.py
+==================================================
+
+# modules/building/router.py
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+from uuid import UUID
+
+from core.database import get_db
+from core.security import get_current_user, get_manager_user, get_admin_user
+from modules.auth.models import User
+from . import schemas, models
+
+router = APIRouter()
+
+# ثبت ساختمان: تکنسین نباید بتواند ساختمان جدید ثبت کند (فقط مدیر و ادمین)
+@router.post("/", response_model=schemas.BuildingResponse, status_code=status.HTTP_201_CREATED)
+def create_building(
+    building: schemas.BuildingCreate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_manager_user)
+):
+    new_building = models.Building(**building.dict())
+    db.add(new_building)
+    db.commit()
+    db.refresh(new_building)
+    return new_building
+
+# دیدن لیست ساختمان‌ها: همه (حتی تکنسین) نیاز دارند ببینند تا انتخاب کنند
+@router.get("/", response_model=List[schemas.BuildingResponse])
+def get_all_buildings(
+    skip: int = 0, limit: int = 100, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    buildings = db.query(models.Building).filter(models.Building.is_deleted == False).offset(skip).limit(limit).all()
+    return buildings
+
+# ویرایش ساختمان: فقط مدیر و ادمین
+@router.put("/{building_id}", response_model=schemas.BuildingResponse)
+def update_building(
+    building_id: UUID, 
+    building_data: schemas.BuildingUpdate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_manager_user)
+):
+    building = db.query(models.Building).filter(models.Building.id == building_id, models.Building.is_deleted == False).first()
+    if not building:
+        raise HTTPException(status_code=404, detail="ساختمان مورد نظر یافت نشد")
+    
+    update_data = building_data.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(building, key, value)
+        
+    db.commit()
+    db.refresh(building)
+    return building
+
+# حذف ساختمان: عملیات حساس، فقط ادمین کل!
+@router.delete("/{building_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_building(
+    building_id: UUID, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    building = db.query(models.Building).filter(models.Building.id == building_id).first()
+    if not building:
+        raise HTTPException(status_code=404, detail="ساختمان مورد نظر یافت نشد")
+    
+    building.is_deleted = True
+    db.commit()
+    return None
+
+# ثبت آسانسور: فقط مدیر و ادمین
+@router.post("/{building_id}/elevators", response_model=schemas.ElevatorResponse, status_code=status.HTTP_201_CREATED)
+def add_elevator_to_building(
+    building_id: UUID, 
+    elevator: schemas.ElevatorCreate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_manager_user)
+):
+    db_building = db.query(models.Building).filter(models.Building.id == building_id).first()
+    if not db_building:
+        raise HTTPException(status_code=404, detail="ساختمان مورد نظر یافت نشد")
+    
+    new_elevator = models.Elevator(building_id=building_id, **elevator.dict())
+    db.add(new_elevator)
+    db.commit()
+    db.refresh(new_elevator)
+    return new_elevator
+
+# حذف آسانسور: فقط ادمین کل
+@router.delete("/elevators/{elevator_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_elevator(
+    elevator_id: UUID, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    elevator = db.query(models.Elevator).filter(models.Elevator.id == elevator_id).first()
+    if not elevator:
+        raise HTTPException(status_code=404, detail="آسانسور مورد نظر یافت نشد")
+    
+    db.delete(elevator)
+    db.commit()
+    return None
+
+==================================================
+File: .\modules\building\schemas.py
+==================================================
+
+# modules/building/schemas.py
+from pydantic import BaseModel, Field
+from typing import Optional
+from uuid import UUID
+
+# --- اسکمای پایه برای آسانسور ---
+class ElevatorBase(BaseModel):
+    type: Optional[str] = Field(None, title="نوع آسانسور")
+    stops: Optional[int] = Field(None, title="تعداد توقف")
+    qr_code_hash: Optional[str] = Field(None, title="کد یکتای کابین")
+
+class ElevatorCreate(ElevatorBase):
+    pass # در صورت نیاز به فیلدهای اجباری، اینجا اضافه می‌شوند
+
+class ElevatorUpdate(ElevatorBase):
+    pass # تمام فیلدها برای آپدیت اختیاری هستند
+
+class ElevatorResponse(ElevatorBase):
+    id: UUID
+    building_id: UUID
+
+    class Config:
+        from_attributes = True
+
+# --- اسکمای پایه برای ساختمان ---
+class BuildingBase(BaseModel):
+    name: str = Field(..., title="نام ساختمان")
+    address: Optional[str] = Field(None, title="آدرس")
+    location_lat: Optional[float] = None
+    location_lng: Optional[float] = None
+    manager_name: Optional[str] = Field(None, title="نام مدیر")
+    manager_phone: Optional[str] = Field(None, title="تلفن مدیر")
+
+class BuildingCreate(BuildingBase):
+    pass
+
+# اسکمای مخصوص آپدیت (تمام فیلدها اختیاری شده‌اند)
+class BuildingUpdate(BaseModel):
+    name: Optional[str] = None
+    address: Optional[str] = None
+    location_lat: Optional[float] = None
+    location_lng: Optional[float] = None
+    manager_name: Optional[str] = None
+    manager_phone: Optional[str] = None
+
+class BuildingResponse(BuildingBase):
+    id: UUID
+    is_deleted: bool
+
+    class Config:
+        from_attributes = True
+
+==================================================
+File: .\modules\building\services.py
+==================================================
+
+
+
+==================================================
+File: .\modules\contract\models.py
+==================================================
+
+# modules/contract/models.py
+import uuid
+import enum
+from sqlalchemy import Column, String, Float, Date, DateTime, ForeignKey, Enum
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+from datetime import datetime
+from core.database import Base
+
+class ContractStatusEnum(str, enum.Enum):
+    ACTIVE = "ACTIVE"
+    EXPIRED = "EXPIRED"
+    CANCELED = "CANCELED"
+
+# === اضافه شدن ساختار نحوه پرداخت ===
+class PaymentFrequencyEnum(str, enum.Enum):
+    MONTHLY = "MONTHLY"       # یک ماهه
+    QUARTERLY = "QUARTERLY"   # سه ماهه
+    FLEXIBLE = "FLEXIBLE"     # زمان نامشخص / منعطف
+
+class Contract(Base):
+    __tablename__ = "contracts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    building_id = Column(UUID(as_uuid=True), ForeignKey("buildings.id"), nullable=False)
+    contract_number = Column(String, unique=True, index=True, nullable=True)
+    
+    employer_name = Column(String, nullable=False)
+    employer_national_id = Column(String, nullable=True)
+    employer_phone = Column(String, nullable=True)
+    
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    
+    total_amount = Column(Float, default=0.0)
+    monthly_fee = Column(Float, default=0.0)
+    total_debt = Column(Float, default=0.0)
+    
+    status = Column(Enum(ContractStatusEnum), default=ContractStatusEnum.ACTIVE)
+    
+    # === اضافه شدن ستون نحوه پرداخت به جدول ===
+    payment_frequency = Column(Enum(PaymentFrequencyEnum), default=PaymentFrequencyEnum.FLEXIBLE)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    building = relationship("Building", back_populates="contracts")
+
+==================================================
+File: .\modules\contract\router.py
+==================================================
+
+# modules/contract/router.py
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from core.database import get_db
+from core.security import get_manager_user, get_admin_user
+from modules.auth.models import User
+from . import schemas, models
+
+router = APIRouter()
+
+@router.post("/", response_model=schemas.ContractResponse, status_code=status.HTTP_201_CREATED)
+def create_contract(
+    contract_data: schemas.ContractCreate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_manager_user)
+):
+    new_contract = models.Contract(**contract_data.model_dump())
+    db.add(new_contract)
+    db.commit()
+    db.refresh(new_contract)
+    return new_contract
+
+# === این همان مسیری است که فلاتر برای فرم پرداختی به آن نیاز داشت ===
+@router.get("/", response_model=list[schemas.ContractResponse])
+def get_all_contracts(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_manager_user)
+):
+    """دریافت لیست تمام قراردادها (مورد نیاز برای تب مالی)"""
+    contracts = db.query(models.Contract).order_by(models.Contract.created_at.desc()).all()
+    return contracts
+
+@router.get("/building/{building_id}", response_model=list[schemas.ContractResponse])
+def get_building_contracts(
+    building_id: str, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_manager_user)
+):
+    contracts = db.query(models.Contract).filter(models.Contract.building_id == building_id).all()
+    return contracts
+
+@router.put("/{contract_id}", response_model=schemas.ContractResponse)
+def update_contract(
+    contract_id: str,
+    contract_data: schemas.ContractUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_manager_user)
+):
+    contract = db.query(models.Contract).filter(models.Contract.id == contract_id).first()
+    if not contract:
+        raise HTTPException(status_code=404, detail="قرارداد مورد نظر یافت نشد")
+    
+    update_data = contract_data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(contract, key, value)
+        
+    db.commit()
+    db.refresh(contract)
+    return contract
+
+@router.delete("/{contract_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_contract(
+    contract_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    contract = db.query(models.Contract).filter(models.Contract.id == contract_id).first()
+    if not contract:
+        raise HTTPException(status_code=404, detail="قرارداد مورد نظر یافت نشد")
+    
+    db.delete(contract)
+    db.commit()
+    return None
+
+==================================================
+File: .\modules\contract\schemas.py
+==================================================
+
+# modules/contract/schemas.py
+from pydantic import BaseModel, Field, UUID4
+from typing import Optional
+from datetime import date, datetime
+# === ایمپورت Enum جدید از فایل models ===
+from .models import ContractStatusEnum, PaymentFrequencyEnum
+
+class ContractCreate(BaseModel):
+    building_id: UUID4
+    contract_number: Optional[str] = None
+    employer_name: str = Field(..., title="نام کارفرما")
+    employer_national_id: Optional[str] = None
+    employer_phone: Optional[str] = None
+    start_date: date = Field(..., title="تاریخ شروع قرارداد")
+    end_date: date = Field(..., title="تاریخ پایان قرارداد")
+    total_amount: float = Field(default=0.0, ge=0, title="مبلغ کل")
+    monthly_fee: float = Field(default=0.0, ge=0, title="مبلغ ماهیانه")
+    # === اضافه شدن فیلد دوره پرداخت ===
+    payment_frequency: PaymentFrequencyEnum = Field(default=PaymentFrequencyEnum.FLEXIBLE, title="دوره پرداخت")
+
+class ContractUpdate(BaseModel):
+    contract_number: Optional[str] = None
+    employer_name: Optional[str] = None
+    employer_national_id: Optional[str] = None
+    employer_phone: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    total_amount: Optional[float] = None
+    monthly_fee: Optional[float] = None
+    status: Optional[ContractStatusEnum] = None
+    # === فیلد دوره پرداخت در آپدیت ===
+    payment_frequency: Optional[PaymentFrequencyEnum] = None
+
+class ContractResponse(BaseModel):
+    id: UUID4
+    building_id: UUID4
+    contract_number: Optional[str]
+    employer_name: str
+    start_date: date
+    end_date: date
+    total_amount: float
+    monthly_fee: float
+    total_debt: float
+    status: ContractStatusEnum
+    # === خروجی دوره پرداخت ===
+    payment_frequency: PaymentFrequencyEnum
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+==================================================
+File: .\modules\contract\services.py
+==================================================
+
+
+
+==================================================
+File: .\modules\finance\models.py
+==================================================
+
+# modules/finance/models.py
+import uuid
+import enum
+from sqlalchemy import Column, String, Float, ForeignKey, Enum, Date, DateTime
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+from datetime import datetime, date
+from core.database import Base
+
+class PaymentMethodEnum(enum.Enum):
+    CASH = "CASH"           # نقدی
+    CHECK = "CHECK"         # چک
+    TRANSFER = "TRANSFER"   # کارت به کارت / واریز به حساب
+
+class Payment(Base):
+    __tablename__ = "payments"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    contract_id = Column(UUID(as_uuid=True), ForeignKey("contracts.id"), nullable=False)
+    amount = Column(Float, nullable=False)
+    payment_date = Column(Date, default=date.today)
+    payment_method = Column(Enum(PaymentMethodEnum), nullable=False)
+    tracking_code = Column(String, nullable=True) # شماره چک یا فیش رسید
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # ارتباط با قرارداد
+    contract = relationship("Contract", backref="payments")
+
+==================================================
+File: .\modules\finance\router.py
+==================================================
+
+# modules/finance/router.py
+import io
+import csv
+from datetime import date, timedelta, datetime
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
+from typing import List
+from uuid import UUID
+
+from core.database import get_db
+from core.security import get_manager_user, get_admin_user
+from modules.auth.models import User
+from modules.contract.models import Contract
+from . import schemas, models
+
+router = APIRouter()
+
+@router.post("/", response_model=schemas.PaymentResponse, status_code=status.HTTP_201_CREATED)
+def register_payment(
+    payment_data: schemas.PaymentCreate,
+    db: Session = Depends(get_db),
+    manager: User = Depends(get_manager_user)
+):
+    """ثبت پرداختی جدید و کسر خودکار از بدهی قرارداد (Atomic Transaction)"""
+    contract = db.query(Contract).filter(Contract.id == payment_data.contract_id).first()
+    if not contract:
+        raise HTTPException(status_code=404, detail="قرارداد مورد نظر یافت نشد")
+
+    new_payment = models.Payment(**payment_data.model_dump())
+    db.add(new_payment)
+    contract.total_debt -= payment_data.amount
+
+    db.commit()
+    db.refresh(new_payment)
+    return new_payment
+
+@router.get("/contract/{contract_id}", response_model=List[schemas.PaymentResponse])
+def get_contract_payments(
+    contract_id: UUID,
+    db: Session = Depends(get_db),
+    manager: User = Depends(get_manager_user)
+):
+    """مشاهده لیست تمام پرداختی‌های یک قرارداد خاص"""
+    payments = db.query(models.Payment).filter(models.Payment.contract_id == contract_id).order_by(models.Payment.created_at.desc()).all()
+    return payments
+
+@router.get("/transactions", summary="دریافت لیست تمام تراکنش‌ها و پرداختی‌های شرکت")
+def get_all_transactions(
+    db: Session = Depends(get_db),
+    manager: User = Depends(get_manager_user)
+):
+    """لیست ۲۰ تراکنش اخیر برای مانیتورینگ مالی مدیر"""
+    payments = db.query(models.Payment).order_by(models.Payment.created_at.desc()).limit(20).all()
+    result = []
+    for p in payments:
+        contract = p.contract
+        result.append({
+            "id": str(p.id),
+            "amount": p.amount,
+            "payment_date": str(p.payment_date),
+            "payment_method": p.payment_method.value,
+            "tracking_code": p.tracking_code,
+            "description": p.description,
+            "employer_name": contract.employer_name if contract and contract.employer_name else "ناشناس",
+            "building_name": contract.building.name if contract and contract.building else "ساختمان نامشخص"
+        })
+    return result
+
+# ==========================================
+# دیتای نمودار گرافیکی درآمد (۷ روز اخیر)
+# ==========================================
+@router.get("/chart-data", summary="دیتای نمودار درآمد ۷ روز اخیر")
+def get_chart_data(
+    db: Session = Depends(get_db),
+    manager: User = Depends(get_manager_user)
+):
+    today = date.today()
+    chart_data = []
+    max_amount = 0.0
+
+    for i in range(6, -1, -1):
+        target_date = today - timedelta(days=i)
+        
+        daily_payments = db.query(models.Payment).filter(
+            models.Payment.payment_date >= datetime.combine(target_date, datetime.min.time()),
+            models.Payment.payment_date <= datetime.combine(target_date, datetime.max.time())
+        ).all()
+        
+        daily_sum = sum(p.amount for p in daily_payments)
+        
+        if daily_sum > max_amount:
+            max_amount = daily_sum
+
+        chart_data.append({
+            "day": target_date.strftime("%m/%d"), 
+            "amount": daily_sum
+        })
+
+    return {"chart_data": chart_data, "max_amount": max_amount}
+
+# ==========================================
+# خروجی فایل اکسل (CSV) از کل تراکنش‌ها
+# ==========================================
+@router.get("/export-csv", summary="دانلود خروجی اکسل تراکنش‌ها")
+def export_transactions_csv(
+    db: Session = Depends(get_db),
+    manager: User = Depends(get_manager_user)
+):
+    payments = db.query(models.Payment).order_by(models.Payment.created_at.desc()).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=",")
+    
+    output.write('\ufeff') # پشتیبانی از زبان فارسی در اکسل
+    writer.writerow(["شناسه تراکنش", "نام کارفرما", "مبلغ (تومان)", "تاریخ", "روش پرداخت", "کد پیگیری"])
+
+    for p in payments:
+        contract = p.contract
+        employer = contract.employer_name if contract else "نامشخص"
+        method = "نقدی" if p.payment_method.value == "CASH" else ("چک" if p.payment_method.value == "CHECK" else "واریز")
+        writer.writerow([str(p.id), employer, int(p.amount), p.payment_date, method, p.tracking_code or "-"])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=financial_report.csv"}
+    )
+
+==================================================
+File: .\modules\finance\schemas.py
+==================================================
+
+# modules/finance/schemas.py
+from pydantic import BaseModel, Field
+from typing import Optional
+from uuid import UUID
+from datetime import date, datetime
+from .models import PaymentMethodEnum
+
+class PaymentCreate(BaseModel):
+    contract_id: UUID
+    amount: float = Field(..., gt=0, title="مبلغ پرداختی")
+    payment_date: date = Field(default_factory=date.today)
+    payment_method: PaymentMethodEnum
+    tracking_code: Optional[str] = Field(None, title="شماره پیگیری/شماره چک")
+    description: Optional[str] = None
+
+class PaymentResponse(BaseModel):
+    id: UUID
+    contract_id: UUID
+    amount: float
+    payment_date: date
+    payment_method: PaymentMethodEnum
+    tracking_code: Optional[str]
+    description: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+==================================================
+File: .\modules\service_report\models.py
+==================================================
+
+# modules/service_report/models.py
+import uuid
+import enum
+from sqlalchemy import Column, String, Float, Boolean, Integer, ForeignKey, Enum, DateTime, Date
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from datetime import datetime
+from core.database import Base
+from sqlalchemy.orm import relationship
+
+# ==========================================
+# Enums مربوط به فرم سرویس دوره‌ای (PM) و قطعات
+# ==========================================
+class PartActionEnum(enum.Enum):
+    CONSUMED = "CONSUMED"   # مصرف شده (روغن و...)
+    REPLACED = "REPLACED"   # تعویض شده
+    REQUESTED = "REQUESTED" # درخواست خرید قطعه برای آینده
+
+class MediaTypeEnum(enum.Enum):
+    IMAGE = "IMAGE"
+    AUDIO = "AUDIO"
+
+class TaskStatusEnum(str, enum.Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    CANCELED = "CANCELED"
+    # --- وضعیت‌های جدید اضافه شده برای مدیریت ماهانه ---
+    CANCELED_BY_TECH = "CANCELED_BY_TECH" # لغو توسط تکنسین (مثلا در بسته بود)
+    EXPIRED_MISSED = "EXPIRED_MISSED"     # منقضی و انجام‌نشده در پایان ماه
+
+# ==========================================
+# Enums مربوط به فرم تعمیرات اضطراری (BM)
+# ==========================================
+class BMDispatchReasonEnum(str, enum.Enum):
+    MANAGER_DISPATCH = "MANAGER_DISPATCH" 
+    EMPLOYER_CALL = "EMPLOYER_CALL"       
+    COMPLEMENTARY = "COMPLEMENTARY"       
+    QC_REPORT = "QC_REPORT"               
+
+class BMArrivalStatusEnum(str, enum.Enum):
+    RUNNING_NORMAL = "RUNNING_NORMAL"                 
+    RUNNING_ABNORMAL = "RUNNING_ABNORMAL"             
+    STOPPED_BY_KEY = "STOPPED_BY_KEY"                 
+    NOISE_IN_MOTION = "NOISE_IN_MOTION"               
+    STOPPED_DOOR_OPEN = "STOPPED_DOOR_OPEN"           
+    STOPPED_DOOR_CLOSED = "STOPPED_DOOR_CLOSED"       
+    STOPPED_BETWEEN_FLOORS = "STOPPED_BETWEEN_FLOORS" 
+
+class BMCauseEnum(str, enum.Enum):
+    END_OF_LIFE = "END_OF_LIFE"         
+    ELECTRICAL_FAULT = "ELECTRICAL_FAULT" 
+    MECHANICAL_FAULT = "MECHANICAL_FAULT" 
+    IMPROPER_USE = "IMPROPER_USE"       
+    VANDALISM = "VANDALISM"             
+    EXTERNAL_FAULT = "EXTERNAL_FAULT"   
+    UNKNOWN = "UNKNOWN"                 
+    NO_FAULT = "NO_FAULT"               
+
+class BMActionEnum(str, enum.Enum):
+    CLEANING = "CLEANING"               
+    TESTING = "TESTING"                 
+    REPLACEMENT = "REPLACEMENT"         
+    REPAIR = "REPAIR"                   
+    TROUBLESHOOTING = "TROUBLESHOOTING" 
+    ADJUSTMENT = "ADJUSTMENT"           
+    RESTART = "RESTART"                 
+    CUSTOMER_SUPPORT = "CUSTOMER_SUPPORT" 
+    OTHER = "OTHER"                     
+
+class ProjectStatusEnum(str, enum.Enum):
+    RUNNING_OK = "RUNNING_OK"                 
+    RUNNING_NEEDS_ACTION = "RUNNING_NEEDS_ACTION" 
+    STOPPED_NEEDS_ACTION = "STOPPED_NEEDS_ACTION" 
+
+# ==========================================
+# جداول دیتابیس
+# ==========================================
+class ServiceReport(Base):
+    __tablename__ = "service_reports"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    elevator_id = Column(UUID(as_uuid=True), ForeignKey("elevators.id"))
+    technician_id = Column(UUID(as_uuid=True)) 
+    visit_time = Column(DateTime, default=datetime.utcnow)
+    tech_lat = Column(Float, nullable=True) 
+    tech_lng = Column(Float, nullable=True)
+    
+    is_emergency = Column(Boolean, default=False)
+    description = Column(String, nullable=True)
+    
+    checklist = Column(JSONB, nullable=True) 
+    
+    bm_dispatch_reason = Column(Enum(BMDispatchReasonEnum), nullable=True)
+    bm_arrival_status = Column(Enum(BMArrivalStatusEnum), nullable=True)
+    bm_cause = Column(Enum(BMCauseEnum), nullable=True)
+    bm_action = Column(Enum(BMActionEnum), nullable=True)
+    project_status = Column(Enum(ProjectStatusEnum), nullable=True)
+    employer_comments = Column(String, nullable=True) 
+
+class ServicePart(Base):
+    __tablename__ = "service_parts"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    report_id = Column(UUID(as_uuid=True), ForeignKey("service_reports.id"))
+    part_name = Column(String, nullable=False)
+    action_type = Column(Enum(PartActionEnum), nullable=False)
+    quantity = Column(Integer, default=1)
+    description = Column(String, nullable=True)
+
+class ServiceMedia(Base):
+    __tablename__ = "service_media"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    report_id = Column(UUID(as_uuid=True), ForeignKey("service_reports.id"), nullable=False)
+    file_path = Column(String, nullable=False) 
+    media_type = Column(Enum(MediaTypeEnum), nullable=False)
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+
+class TaskAssignment(Base):
+    __tablename__ = "task_assignments"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    building_id = Column(UUID(as_uuid=True), ForeignKey("buildings.id"), nullable=False)
+    technician_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False) 
+    assigned_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False) 
+    task_date_shamsi = Column(String, nullable=False) 
+    status = Column(Enum(TaskStatusEnum), default=TaskStatusEnum.PENDING)
+    
+    # --- فیلد جدید برای ثبت دلیل انجام نشدن کار توسط تکنسین ---
+    cancel_reason = Column(String, nullable=True) 
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    building = relationship("Building")
+
+==================================================
+File: .\modules\service_report\router.py
+==================================================
+
+# modules/service_report/router.py
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
+from sqlalchemy.orm import Session
+from datetime import date
+from typing import List
+from uuid import UUID
+from core.database import get_db
+from core.security import get_current_user, get_admin_user
+from modules.auth.models import User
+from shared.storage import save_file
+from . import schemas, models
+
+from modules.building.models import Elevator
+from modules.contract.models import Contract, ContractStatusEnum
+
+router = APIRouter()
+
+@router.post("/", response_model=schemas.ServiceReportResponse, status_code=status.HTTP_201_CREATED)
+def create_service_report(
+    report_data: schemas.ServiceReportCreate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """ثبت گزارش سرویس جدید (با پشتیبانی از چک‌لیست ۲۵ گانه و منطق شرایط اضطراری)"""
+    elevator = db.query(Elevator).filter(Elevator.id == report_data.elevator_id).first()
+    if not elevator:
+        raise HTTPException(status_code=404, detail="آسانسور مورد نظر یافت نشد")
+
+    contract = db.query(Contract).filter(
+        Contract.building_id == elevator.building_id,
+        Contract.status == ContractStatusEnum.ACTIVE
+    ).order_by(Contract.end_date.desc()).first()
+
+    # اعمال قوانین قرارداد فقط در صورتی که شرایط اضطراری نباشد
+    if not report_data.is_emergency:
+        if not contract:
+            raise HTTPException(status_code=403, detail="هیچ قرارداد فعالی برای این ساختمان ثبت نشده است. اجازه ثبت گزارش ندارید.")
+
+        if contract.end_date < date.today():
+            raise HTTPException(status_code=403, detail=f"قرارداد این ساختمان در تاریخ {contract.end_date} منقضی شده است. لطفا جهت تمدید به مدیریت ارجاع دهید.")
+
+    parts_data = report_data.parts_used
+    report_dict = report_data.model_dump(exclude={"parts_used"}) 
+    
+    new_report = models.ServiceReport(technician_id=str(current_user.id), **report_dict)
+    db.add(new_report)
+    db.flush() 
+    
+    for part in parts_data:
+        new_part = models.ServicePart(
+            report_id=new_report.id,
+            part_name=part.part_name,
+            action_type=part.action_type,
+            quantity=part.quantity,
+            description=part.description
+        )
+        db.add(new_part)
+    
+    db.commit()
+    db.refresh(new_report)
+    return new_report
+
+@router.get("/", response_model=List[schemas.ServiceReportResponse])
+def get_all_reports(
+    skip: int = 0, limit: int = 100, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """دریافت لیست کلی تمام گزارش‌ها"""
+    reports = db.query(models.ServiceReport).order_by(models.ServiceReport.visit_time.desc()).offset(skip).limit(limit).all()
+    return reports
+
+# ==========================================
+# مسیر جدید: دریافت تاریخچه یک آسانسور خاص
+# ==========================================
+@router.get("/elevator/{elevator_id}/history", response_model=List[schemas.ServiceReportResponse])
+def get_elevator_history(
+    elevator_id: UUID,
+    skip: int = 0, limit: int = 50,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """دریافت سوابق و پرونده پزشکی یک آسانسور خاص برای تکنسین‌ها"""
+    reports = db.query(models.ServiceReport).filter(
+        models.ServiceReport.elevator_id == elevator_id
+    ).order_by(models.ServiceReport.visit_time.desc()).offset(skip).limit(limit).all()
+    
+    return reports
+
+@router.delete("/{report_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_service_report(
+    report_id: UUID, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    """حذف گزارش (فقط ادمین)"""
+    report = db.query(models.ServiceReport).filter(models.ServiceReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="گزارش مورد نظر یافت نشد")
+    
+    db.delete(report)
+    db.commit()
+    return None
+
+@router.post("/{report_id}/media", status_code=status.HTTP_201_CREATED)
+async def upload_report_media(
+    report_id: UUID,
+    files: List[UploadFile] = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """آپلود همزمان چندین عکس یا فایل صوتی برای یک گزارش خاص"""
+    report = db.query(models.ServiceReport).filter(models.ServiceReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="گزارش مورد نظر یافت نشد")
+        
+    uploaded_records = []
+    
+    for file in files:
+        if file.content_type.startswith("image/"):
+            media_type = models.MediaTypeEnum.IMAGE
+            folder = "images"
+        elif file.content_type.startswith("audio/") or file.content_type in ["video/mp4", "video/webm"]:
+            media_type = models.MediaTypeEnum.AUDIO
+            folder = "audio"
+        else:
+            raise HTTPException(status_code=400, detail=f"فرمت فایل {file.filename} پشتیبانی نمی‌شود")
+            
+        file_path = await save_file(file, folder)
+        
+        new_media = models.ServiceMedia(
+            report_id=report.id,
+            file_path=file_path,
+            media_type=media_type
+        )
+        db.add(new_media)
+        uploaded_records.append(new_media)
+        
+    db.commit()
+    return {"message": f"{len(uploaded_records)} فایل با موفقیت برای گزارش ضمیمه شد"}
+
+==================================================
+File: .\modules\service_report\schemas.py
+==================================================
+
+# modules/service_report/schemas.py
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict, Any
+from datetime import datetime
+from uuid import UUID
+import enum
+
+# ایمپورت Enum های جدید از مدل
+from .models import (
+    PartActionEnum,
+    BMDispatchReasonEnum,
+    BMArrivalStatusEnum,
+    BMCauseEnum,
+    BMActionEnum,
+    ProjectStatusEnum
+)
+
+# --- وضعیت‌های استاندارد برای چک‌لیست ---
+class CheckStatusEnum(str, enum.Enum):
+    OK = "OK"                     # سالم / انجام شد
+    NEEDS_REPAIR = "NEEDS_REPAIR" # نیاز به تعمیر/سرویس
+    DEFECTIVE = "DEFECTIVE"       # معیوب
+    NOT_CHECKED = "NOT_CHECKED"   # بررسی نشد
+
+# --- طرح‌‌واره (Schema) دقیق چک‌لیست ۲۵ گانه سرویس ---
+class PMChecklist(BaseModel):
+    item_01_cabin_light: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۱. روشنایی کابین")
+    item_02_sill_cleanliness: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۲. تمیزی پاخور کابین و طبقات")
+    item_03_indicators_fan: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۳. نمراتور، اعلام طبقات، فن و آژیر")
+    item_04_cabin_vibration: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۴. لرزش و صدای حرکت کابین")
+    item_05_door_shoes: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۵. عملکرد لته‌های درب و کفشک درب")
+    item_06_floor_call: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۶. عملکرد احضار طبقات")
+    item_07_leveling: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۷. توقف لول طبقات")
+    item_08_safety_circuit: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۸. تست مدار سری ایمنی کنتاکت‌ها و قفل‌ها")
+    item_09_door_dictator: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۹. تست عملکرد دیکتاتور و خودبسته شدن")
+    item_10_inspection_movement: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۱۰. عملکرد قارچی، رویزیون و حرکت بالا/پایین")
+    item_11_roof_cleanliness: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۱۱. تمیزی سقف کابین")
+    item_12_wiring_tidiness: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۱۲. مرتب بودن سیم‌های رویزیون و قفل‌ها")
+    item_13_oilers: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۱۳. پر بودن روغندان کابین و وزنه")
+    item_14_ropes_attachments: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۱۴. درمهره، اشپیل و کرپی سربکسل")
+    item_15_shoes_tightening: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۱۵. آچارکشی لرزه‌‌گیرها و کفشک‌ها")
+    item_16_brackets_tightening: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۱۶. آچارکشی پشت‌بندها و براکت‌ها")
+    item_17_sensors_magnets: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۱۷. تمیزی سنسور و آهنرباهای دورانداز")
+    item_18_microswitches_parachute: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۱۸. تست میکروسوئیچ‌های پاراشوت و حد")
+    item_19_contactors_relays: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۱۹. عملکرد کنتاکتورها و رله‌های تابلو")
+    item_20_emergency_rescue: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۲۰. تست نجات اضطراری")
+    item_21_motor_brake: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۲۱. عملکرد دسته و فک ترمز موتور")
+    item_22_motor_grooves: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۲۲. بازدید شیار موتور و قطر سیم‌بکسل")
+    item_23_governor: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۲۳. تست گاورنر و میکروسوئیچ گاورنر")
+    item_24_motor_oil: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۲۴. چک کردن روغن موتور")
+    item_25_engine_room_ventilation: CheckStatusEnum = Field(default=CheckStatusEnum.NOT_CHECKED, title="۲۵. روشنایی و تهویه موتورخانه")
+
+# --- طرح‌واره برای قطعات (ورودی) ---
+class ServicePartCreate(BaseModel):
+    part_name: str = Field(..., title="نام قطعه", min_length=2)
+    action_type: PartActionEnum
+    quantity: int = Field(default=1, gt=0)
+    description: Optional[str] = None
+
+# --- طرح‌‌واره برای ثبت کل فرم (ترکیب PM و BM) ---
+class ServiceReportCreate(BaseModel):
+    elevator_id: UUID
+    tech_lat: Optional[float] = Field(None, title="مختصات عرض جغرافیایی تکنسین")
+    tech_lng: Optional[float] = Field(None, title="مختصات طول جغرافیایی تکنسین")
+    
+    is_emergency: bool = Field(default=False, title="آیا این فرم تعمیرات اضطراری (BM) است؟")
+    description: Optional[str] = Field(None, title="توضیحات تکمیلی تکنسین")
+    
+    # فیلدهای مربوط به فرم سرویس دوره‌ای (PM)
+    checklist: Optional[PMChecklist] = Field(None, title="چک‌لیست سرویس ماهانه")
+    
+    # فیلدهای مربوط به فرم تعمیرات اضطراری (BM)
+    bm_dispatch_reason: Optional[BMDispatchReasonEnum] = Field(None, title="علت مراجعه")
+    bm_arrival_status: Optional[BMArrivalStatusEnum] = Field(None, title="وضعیت هنگام مراجعه")
+    bm_cause: Optional[BMCauseEnum] = Field(None, title="علت خرابی")
+    bm_action: Optional[BMActionEnum] = Field(None, title="اقدام انجام شده")
+    project_status: Optional[ProjectStatusEnum] = Field(None, title="وضعیت هنگام ترک پروژه")
+    employer_comments: Optional[str] = Field(None, title="نظرات کارفرما")
+    
+    parts_used: List[ServicePartCreate] = Field(default=[], title="قطعات مصرفی/تعویضی")
+
+# --- طرح‌واره برای نمایش خروجی ---
+class ServiceReportResponse(ServiceReportCreate):
+    id: UUID
+    technician_id: UUID
+    visit_time: datetime
+
+    class Config:
+        from_attributes = True
+
+==================================================
+File: .\modules\service_report\services.py
+==================================================
+
+
+
+==================================================
+File: .\shared\sms_provider.py
+==================================================
+
+
+
+==================================================
+File: .\shared\storage.py
+==================================================
+
+# shared/storage.py
+import os
+import uuid
+from fastapi import UploadFile
+from pathlib import Path
+
+# ساخت پوشه اصلی و زیرپوشه‌ها در کنار پروژه
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+(UPLOAD_DIR / "images").mkdir(exist_ok=True)
+(UPLOAD_DIR / "audio").mkdir(exist_ok=True)
+
+async def save_file(file: UploadFile, folder: str) -> str:
+    """ذخیره فایل در سرور و برگرداندن مسیر آن"""
+    # استخراج پسوند فایل (مثل jpg یا mp3)
+    ext = file.filename.split('.')[-1]
+    # ساخت یک نام یکتا برای جلوگیری از تداخل اسم‌ها
+    new_filename = f"{uuid.uuid4().hex}.{ext}"
+    file_path = UPLOAD_DIR / folder / new_filename
+    
+    # ذخیره فایل در هارد سرور
+    with open(file_path, "wb") as buffer:
+        buffer.write(await file.read())
+    
+    # برگرداندن مسیر نسبی برای ذخیره در دیتابیس
+    return str(file_path)
