@@ -1,3 +1,4 @@
+<a id="top"></a>
 <div align="center">
 
 <a href="https://web-portal-ivory-nine.vercel.app/" target="_blank" rel="noopener noreferrer">
@@ -28,10 +29,20 @@
 <br/>
 <br/>
 
-**🇺🇸 [Read Documentation in English](#) &nbsp; | &nbsp; 🇮🇷 [مطالعه مستندات معماری به زبان فارسی](#)**
+**🇺🇸 [Read Documentation in English](#english-documentation) &nbsp; | &nbsp; 🇮🇷 [مطالعه مستندات معماری به زبان فارسی](#persian-documentation)**
 
 <br/>
 
+</div>
+
+---
+
+<a id="english-documentation"></a>
+
+# 🇬🇧 English Documentation
+
+<div align="right">
+  <i>Language: <b>English</b> | <a href="#persian-documentation">🇮🇷 مطالعه مستندات به زبان فارسی</a></i>
 </div>
 
 ---
@@ -571,3 +582,524 @@ sudo chmod +x /opt/scripts/backup-databases.sh
 
 ---
 *Maintained under standard commercial enterprise licensing. All rights reserved.*
+
+<br/>
+
+<br/>
+
+<div align="center">
+  <a href="#top">⬆️ Back to Top</a> &nbsp; | &nbsp; <a href="#persian-documentation">🇮🇷 Switch to Persian Documentation (مطالعه مستندات فارسی)</a>
+</div>
+
+---
+
+<a id="persian-documentation"></a>
+
+# 🇮🇷 مستندات جامع معماری و فنی اکوسیستم آسانرو (فارسی)
+
+<div align="left">
+  <i>زبان: <b>فارسی</b> | <a href="#english-documentation">🇬🇧 Switch to English Documentation</a></i>
+</div>
+
+---
+
+## ۱. خلاصه اجرایی و نمای کلی اکوسیستم (Executive Summary & Ecosystem Overview)
+
+> ### 📌 خلاصه اجرایی
+> **شرکت آسانرو اطمینان امیر کرمان**، مجری رسمی و دارای پروانه مهندسی و ساخت انواع آسانسورهای کششی سرعتی، گیرلس، روملس (MRL) و هیدرولیک، اخذ تاییدیه استاندارد ملی ایران و قراردادهای سرویس و نگهداری دوره‌ای ۲۴ ساعته در استان کرمان می‌باشد.
+>
+> این مونو‌ریپو تمامی زیرساخت‌های نرم‌افزاری و عملیات مهندسی شرکت را در یک ساختار یکپارچه، رویدادمحور و با بازدهی بالا تجمیع کرده است:
+>
+> * **وب‌پورتال مشتریان (`apps/web-portal`)**: اپلیکیشن تحت وب مدرن بر پایه Next.js 14 App Router و معماری Progressive Web App (PWA) با اسلایدر هیرو بدون پرش ساختاری (Zero-CLS)، فروشگاه آنلاین قطعات آسانسور، سیستم مشاوره آنلاین و داشبورد مدیریتی مشتریان و کارشناسان.
+> * **اپلیکیشن تکنسین‌ها و مدیران ساختمان (`apps/mobile-app`)**: اپلیکیشن کراس‌پلتفرم بر پایه فریمورک Flutter که توسط تکنسین‌های فنی در محل پروژه جهت چک‌لیست‌های دوره‌ای، تست بار پاراشوت، ثبت گزارش‌های خرابی و تایید حضور توسط مدیر ساختمان استفاده می‌شود.
+> * **هسته اصلی عملیات و ERP سازمانی (`services/core-api`)**: بک‌اند پرسرعت مبتنی بر FastAPI جهت مدیریت داده‌های کلیدی مهندسی اعم از مشخصات ساختمان‌ها، ویژگی‌های فنی آسانسورها، بازرسی‌های ادواری، قراردادهای رسمی، محاسبات مالی و اعزام سریع تکنسین.
+> * **سرویس فروشگاهی و ربات‌های پیام‌رسان (`services/bot-service`)**: سرویس FastAPI با کارایی بالا جهت تعاملات بلادرنگ کاربران از طریق ربات تلگرام و بله، سبد خرید قطعات، وب‌هوک‌های درگاه پرداخت بانکی و موتور همگام‌سازی رویدادها (Outbox Pattern).
+> * **پروتکل‌های مشترک و همگام‌سازی دیتابیس (`shared/` و `core_sync_service.py`)**: سینک بلادرنگ تراکنشی میان دو دیتابیس که تضمین می‌کند قراردادها و اطلاعات ثبت‌شده در وب‌پورتال، بدون تداخل و به صورت ۱:۱ با پایگاه داده اپلیکیشن تکنسین‌ها همگام شوند.
+
+<br/>
+
+```mermaid
+flowchart LR
+    subgraph Clients["لایه رابط کاربری و کلاینت‌ها (Presentation Layer)"]
+        WP["وب‌پورتال Next.js 14<br/>(پورت ۳۰۰۰ / Vercel Edge)"]
+        MA["اپلیکیشن موبایل Flutter<br/>(تکنسین‌ها و مدیران)"]
+        TB["ربات‌های تلگرام و بله<br/>(اتوماسیون خدمات مشتریان)"]
+    end
+
+    subgraph Gateway["دروازه شبکه داخلی داکر"]
+        DOCKER["شبکه Bridge ایزوله داکر<br/>(elevator_network)"]
+    end
+
+    subgraph Backends["لایه سرویس‌های بک‌اند (Application Tier)"]
+        BOT["سرویس ربات و فروشگاه<br/>FastAPI (:8000)"]
+        CORE["سرویس اصلی ERP آسانسور<br/>FastAPI (:8001)"]
+        SYNC["ورکر همگام‌سازی دیتابیس<br/>(Transactional Outbox)"]
+    end
+
+    subgraph Persistence["لایه ذخیره‌سازی و کش (Storage & Cache)"]
+        PG[("موتور PostgreSQL 16<br/>دیتابیس دوگانه (elevator_db و shopbot_db)")]
+        RD[("کش حافظه‌ای Redis 7<br/>قفل‌های توزیع‌شده Redlock")]
+    end
+
+    WP -->|HTTP / REST| DOCKER
+    TB -->|Webhooks| DOCKER
+    MA -->|HTTP / REST| DOCKER
+
+    DOCKER --> BOT
+    DOCKER --> CORE
+    BOT -->|محدودسازی نرخ و Redlock| RD
+    BOT -->|درایور AsyncPG| PG
+    CORE -->|SQLAlchemy و psycopg2| PG
+    BOT -.->|همگام‌سازی رویدادها| SYNC
+    SYNC -->|تطبیق ۱ به ۱ داده‌ها| CORE
+```
+
+---
+
+## ۲. ماتریس پشته فناوری (Technology Stack Matrix)
+
+| لایه معماری | فناوری | جزئیات پیاده‌سازی و هدف معماری |
+| :--- | :--- | :--- |
+| **وب‌پورتال مشتریان** | Next.js 14 (App Router) | رندر ترکیبی SSR/SSG، تایپ‌اسکریپت Strict، تیل‌ویند CSS با طراحی مدرن مشکی/طلایی، کامپوننت‌های Framer Motion، استایل‌های ایزوله اسلایدر Zero-CLS. |
+| **اپلیکیشن موبایل** | Flutter 3.x (Dart) | معماری Clean Architecture، مدیریت وضعیت Riverpod/BLoC، ماژول‌های امضای دیجیتال بازرسی و آفلاین-فرست کشینگ برای محیط موتورخانه بدون اینترنت. |
+| **سرویس اصلی ERP** | FastAPI (Python 3.12) | معماری لایه‌ای Service-Repository، اعتبارسنجی با Pydantic v2، مدیریت مایگریشن‌های Alembic، موتور ORM با SQLAlchemy 2.0. |
+| **سرویس ربات و فروشگاه** | FastAPI + Python-Telegram-Bot + Bale | وب‌هوک‌های با تاخیر کم، موتور سینک Outbox مبتنی بر پایگاه‌داده، پردازش صف خرید و اتصال امن به درگاه پرداخت شاپرک/زرین‌پال. |
+| **پایگاه داده رابطه‌ای** | PostgreSQL 16 Alpine | دو کانتینر لاجیکال مجزا: `elevator_db` (عملیات مهندسی و بازرسی‌ها) و `shopbot_db` (مشتریان، ربات‌ها و کاتالوگ فروشگاه). |
+| **کش و صف پیام** | Redis 7 Alpine | کش کردن کوئری‌های تکراری، سیستم قفل‌های توزیع‌شده Redlock برای جلوگیری از رزرو همزمان قطعات، و Rate Limiting توزیع‌شده. |
+| **کانتینرسازی و شبکه** | Docker & Docker Compose v3.8 | بیلد‌های Multi-Stage بهینه، اجرای Unprivileged بدون دسترسی root، و شبکه داخلی Bridge ایزوله (`elevator_network`). |
+| **وب‌سرور و Reverse Proxy** | Nginx + Certbot | هدایت خودکار ترافیک HTTPS با الگوریتم HTTP/2، مسیریابی تمیز اندپوینت‌ها (`/` برای وب‌پورتال، `/api/v1/` برای ربات و `/core/` برای ERP)، صدور SSL خودکار Let's Encrypt. |
+
+---
+
+## ۳. معماری ساختار دایرکتوری‌های مونو‌ریپو (Monorepo Directory Architecture)
+
+```text
+Elevator_Ecosystem/
+├── apps/
+│   ├── mobile-app/              # اپلیکیشن موبایل فلاتر (تکنسین‌ها و مدیران ساختمان)
+│   │   ├── lib/                 # سورس‌کد دارت (معماری لایه‌ای BLoC/Clean)
+│   │   └── pubspec.yaml         # نیازمندی‌های فلاتر و وابستگی‌های پکیج‌ها
+│   └── web-portal/              # وب‌پورتال و فروشگاه مدرن Next.js 14
+│       ├── src/
+│       │   ├── app/             # مسیرهای App Router و صفحات استاتیک/داینامیک
+│       │   ├── components/      # کامپوننت‌های ماژولار UI (HeroSlider، کاتالوگ قطعات، فرم‌ها)
+│       │   └── lib/             # هلپرها، تایپ‌ها و کلاینت‌های API
+│       ├── public/images/       # است‌های گرافیکی، تصاویر آسانسور لوکس و کات‌اوت‌ها
+│       ├── Dockerfile           # داکرفایل Multi-Stage تولید خروجی Standalone نود ۲۰
+│       └── next.config.mjs      # پیکربندی پروکسی داخلی و Standalone Output
+├── services/
+│   ├── core-api/                # بک‌اند اصلی عملیات مهندسی و استاندارد (ERP)
+│   │   ├── app/                 # مسیرهای FastAPI، سرویس‌ها و مدل‌های SQLAlchemy
+│   │   ├── migrations/          # اسکریپت‌های مایگریشن دیتابیس Alembic
+│   │   ├── Dockerfile           # کانتینر چندمرحله‌ای پایتون ۳.۱۲ با کاربر امن Non-root
+│   │   └── requirements.txt     # کتابخانه‌های پایتونی (FastAPI, SQLAlchemy, psycopg2)
+│   └── bot-service/             # سرویس فروشگاه آنلاین، ربات‌های تلگرام/بله و سینک
+│       ├── api/                 # اندپوینت‌های RESTful و هوک‌های وب
+│       ├── bot/                 # هندلرهای ربات‌های بله و تلگرام
+│       ├── services/            # موتور Outbox Sync و سرویس‌های درگاه پرداخت
+│       ├── Dockerfile           # کانتینر امن و سبک پایتون ۳.۱۲
+│       └── requirements.txt     # کتابخانه‌های پردازش تلگرام و وب
+├── shared/                      # کدهای مشترک (اسکیماهای DTO مشترک و پروتکل‌های دیتابیس)
+├── infra/
+│   └── docker/
+│       └── init-multi-postgres.sh # اسکریپت اتوماتیک ساخت هر دو دیتابیس در اولین بوت
+├── docker-compose.yml           # فایل ارکستراسیون مستر داکر برای اجرای همزمان ۵ سرویس
+├── .env.docker                  # تمپلیت متغیرهای محیطی پروداکشن کانتینرها
+├── .env.example                 # نمونه متغیرهای محیطی توسعه لوکال
+└── README.md                    # مستندات مرجع جامع سازمانی (دو زبانه)
+```
+
+---
+
+## ۴. نگاشت پورت‌ها و اندپوینت‌های سرویس‌ها (Port Mappings & Service Endpoints)
+
+| نام سرویس داکر | پورت کانتینر | پورت هاست | پروتکل / مسیر | هدف و دسترسی در شبکه |
+| :--- | :--- | :--- | :--- | :--- |
+| **`web-portal`** | `3000` | `3000` | HTTP / Next.js | وب‌پورتال عمومی و فروشگاه آنلاین (`http://localhost:3000`) |
+| **`bot-service`** | `8000` | `8000` | HTTP / FastAPI | API فروشگاه، وب‌هوک ربات‌ها و مستندات OpenAPI (`http://localhost:8000/docs`) |
+| **`core-api`** | `8000` | `8001` | HTTP / FastAPI | API هسته مرکزی ERP مهندسی و مستندات Swagger (`http://localhost:8001/docs`) |
+| **`postgres`** | `5432` | `5432` | TCP / PostgreSQL | پایگاه داده رابطه‌ای (دیتابیس‌های `elevator_db` و `shopbot_db`) |
+| **`redis`** | `6379` | `6379` | TCP / Redis | کش حافظه‌ای پرسرعت و سرور قفل‌های توزیع‌شده Redlock |
+
+---
+
+## ۵. راهنمای راه‌اندازی سریع در محیط توسعه محلی (Local Development Quick Start)
+
+### راه‌اندازی سریع با Docker Compose (پیشنهادی)
+
+```bash
+# ۱. دریافت آخرین نسخه کد مخزن
+git clone https://github.com/mahdi8280/Elevator_Ecosystem.git
+cd Elevator_Ecosystem
+
+# ۲. ایجاد فایل متغیرهای محیطی از روی تمپلیت
+copy .env.docker .env    # در محیط ویندوز PowerShell
+# یا در لینوکس / مک: cp .env.docker .env
+
+# ۳. بیلد و اجرای تمام کانتینرها در پس‌زمینه
+docker compose up --build -d
+
+# ۴. بررسی وضعیت سلامت و آماده‌به‌کار بودن سرویس‌ها
+docker compose ps
+```
+
+### اجرای مستقیم بدون داکر (Native Development Commands)
+
+```bash
+# ۱. اجرای پایگاه داده و کش در پس‌زمینه با داکر
+docker compose up -d postgres redis
+
+# ۲. راه‌اندازی هسته مرکزی مهندسی (Core API)
+cd services/core-api
+python -m venv venv
+# فعال‌سازی در ویندوز: .\venv\Scripts\activate | در لینوکس: source venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head
+uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+
+# ۳. راه‌اندازی سرویس فروشگاه و ربات‌ها (Bot Service)
+cd ../bot-service
+python -m venv venv
+# فعال‌سازی در ویندوز: .\venv\Scripts\activate | در لینوکس: source venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+# ۴. راه‌اندازی وب‌پورتال کاربری (Web Portal)
+cd ../../apps/web-portal
+npm install
+npm run dev
+
+# ۵. راه‌اندازی اپلیکیشن موبایل تکنسین‌ها (Mobile App)
+cd ../mobile-app
+flutter pub get
+flutter run
+```
+
+---
+
+## ۶. راهنمای استقرار پروداکشن در سرور لینوکس VPS (راهنمای جامع ۵ مرحله‌ای)
+
+این بخش یک راهنمای عملیاتی و دقیق برای دیپلوی کل پشته روی سرور مجازی (Ubuntu 24.04 LTS) با Nginx و گواهی رایگان SSL است.
+
+### مرحله ۱: آماده‌سازی سرور و نصب داکر
+
+وارد سرور ابری خود شده و پکیج‌های پایه و داکر رسمی را نصب نمایید:
+
+```bash
+# به‌روزرسانی مخازن لینوکس
+sudo apt-get update && sudo apt-get upgrade -y
+
+# نصب ابزارهای ضروری و امنیتی
+sudo apt-get install -y curl git ufw ca-certificates gnupg lsb-release htop
+
+# نصب Docker Engine و پلاگین داکر کامپوز از مخزن رسمی داکر
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# فعال‌سازی اجرای داکر در هنگام بوت سرور و تنظیم دسترسی کاربر جاری
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER
+
+# پیکربندی فایروال لینوکس (UFW) برای امنیت حداکثری
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp    # پورت SSH
+sudo ufw allow 80/tcp    # ترافیک HTTP
+sudo ufw allow 443/tcp   # ترافیک HTTPS
+sudo ufw --force enable
+
+# مسدودسازی صریح پورت‌های پایگاه داده از دسترسی مستقیم خارجی
+sudo ufw deny 5432/tcp
+sudo ufw deny 6379/tcp
+```
+
+### مرحله ۲: کلون کردن سورس‌کد و آماده‌سازی دایرکتوری کاری
+
+```bash
+# ساخت پوشه استقرار پروژه و تنظیم مالکیت کاربر جاری
+sudo mkdir -p /opt/elevator-ecosystem
+sudo chown -R $USER:$USER /opt/elevator-ecosystem
+cd /opt/elevator-ecosystem
+
+# کلون کردن مخزن گیت
+git clone https://github.com/mahdi8280/Elevator_Ecosystem.git .
+
+# بررسی ساختار فایل‌ها
+ls -la
+```
+
+### مرحله ۳: پیکربندی متغیرهای محیطی پروداکشن (`.env`)
+
+```bash
+# ایجاد فایل اصلی تنظیمات از روی تمپلیت پروداکشن
+cp .env.docker .env
+
+# تولید کلیدهای مخفی و امن تصادفی ۶۴ کاراکتری
+POSTGRES_PASS=$(openssl rand -hex 24)
+REDIS_PASS=$(openssl rand -hex 24)
+JWT_SECRET=$(openssl rand -hex 32)
+
+# جایگزینی مقادیر امن در فایل .env
+sed -i "s/POSTGRES_PASSWORD=secure_postgres_pass_here/POSTGRES_PASSWORD=$POSTGRES_PASS/g" .env
+sed -i "s/REDIS_PASSWORD=secure_redis_pass_here/REDIS_PASSWORD=$REDIS_PASS/g" .env
+sed -i "s/SECRET_KEY=change_this_to_a_super_secret_jwt_key_at_least_32_chars/SECRET_KEY=$JWT_SECRET/g" .env
+
+# ویرایش فایل با nano جهت تنظیم دامنه اختصاصی و توکن‌های ربات‌ها
+nano .env
+```
+
+### مرحله ۴: بیلد و راه‌اندازی کانتینرها با Docker Compose
+
+```bash
+# بیلد تصاویر و اجرای تمام ۵ کانتینر در حالت پیش‌زمینه
+docker compose up --build -d
+
+# مشاهده وضعیت سلامت (Health Status) و پورت‌ها
+docker compose ps
+
+# بررسی لاگ‌های اولیه دیتابیس و اطمینان از ایجاد خودکار دو دیتابیس elevator_db و shopbot_db
+docker compose logs postgres
+
+# بررسی اجرای بدون خطای وب‌پورتال و سرویس‌های API
+docker compose logs web-portal
+docker compose logs core-api
+docker compose logs bot-service
+
+# اجرای مایگریشن‌های اولیه در صورت نیاز
+docker compose exec core-api alembic upgrade head
+docker compose exec bot-service alembic upgrade head
+```
+
+### مرحله ۵: پیکربندی وب‌سرور Nginx و صدور گواهی SSL رایگان Let's Encrypt
+
+برای اتصال دامنه رسمی، Nginx را به عنوان Reverse Proxy پیکربندی می‌کنیم:
+
+```bash
+# نصب وب‌سرور انجین‌ایکس و ربات صدور گواهی SSL
+sudo apt-get install -y nginx certbot python3-certbot-nginx
+
+# ساخت فایل تنظیمات اختصاصی دامنه در انجین‌ایکس
+sudo nano /etc/nginx/sites-available/elevator-ecosystem.conf
+```
+
+محتوای کانفیگ را مطابق زیر قرار دهید (دامنه `asanro.com` را با دامنه واقعی خود جایگزین کنید):
+
+```nginx
+# تعریف بالادستی‌ها (Upstreams)
+upstream web_portal_upstream {
+    server 127.0.0.1:3000;
+    keepalive 32;
+}
+
+upstream bot_service_upstream {
+    server 127.0.0.1:8000;
+    keepalive 32;
+}
+
+upstream core_api_upstream {
+    server 127.0.0.1:8001;
+    keepalive 32;
+}
+
+# ۱. وب‌پورتال اصلی مشتریان (asanro.com و www.asanro.com)
+server {
+    server_name asanro.com www.asanro.com;
+
+    client_max_body_size 64M;
+
+    location / {
+        proxy_pass http://web_portal_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# ۲. وب‌سرویس‌ها و APIهای یکپارچه (api.asanro.com)
+server {
+    server_name api.asanro.com;
+
+    client_max_body_size 128M;
+
+    # سرویس ربات‌ها و فروشگاه قطعات (/api/v1/)
+    location /api/v1/ {
+        proxy_pass http://bot_service_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # وب‌هوک ربات تلگرام و بله (/bot/)
+    location /bot/ {
+        proxy_pass http://bot_service_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # هسته عملیات فنی و ERP مهندسی آسانسور (/core/)
+    location /core/ {
+        proxy_pass http://core_api_upstream/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # پروب‌های بررسی سلامت کانتینرها
+    location /health {
+        proxy_pass http://bot_service_upstream/health;
+    }
+}
+```
+
+فعال‌سازی کانفیگ و صدور خودکار SSL:
+
+```bash
+# ایجاد لینک به پوشه سایت‌های فعال
+sudo ln -sf /etc/nginx/sites-available/elevator-ecosystem.conf /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# تست صحت سینتکس انجین‌ایکس
+sudo nginx -t
+
+# بارگذاری مجدد سرویس انجین‌ایکس
+sudo systemctl reload nginx
+
+# صدور خودکار و نصب گواهینامه‌های SSL توسط Certbot
+sudo certbot --nginx -d asanro.com -d www.asanro.com -d api.asanro.com --non-interactive --agree-tos -m admin@asanro.com
+
+# بررسی فعال بودن تایمر تمدید خودکار گواهینامه‌ها
+sudo systemctl status certbot.timer
+```
+
+---
+
+## ۷. معماری هیبریدی جایگزین: فرانت‌اند روی Vercel و بک‌اند روی سرور VPS
+
+در صورتی که ترجیح می‌دهید پورتال Next.js روی شبکه ابری پرسرعت Vercel Edge مستقر باشد و سرویس‌های بک‌اند روی سرور اختصاصی لینوکس اجرا شوند:
+
+```mermaid
+flowchart LR
+    USERS["کاربران و مشتریان (مرورگر وب)"] -->|HTTPS| VERCEL["شبکه لبه جهانی Vercel<br/>(apps/web-portal)"]
+    TECH["تکنسین‌های فنی (اپلیکیشن موبایل)"] -->|HTTPS| VPS["سرور لینوکس VPS (Ubuntu 24.04)<br/>Nginx + موتور داکر"]
+    VERCEL -->|REST API /api/v1| VPS
+    VPS --> BOT_API["سرویس ربات و فروشگاه (:8000)"]
+    VPS --> CORE_API["هسته عملیات مهندسی (:8001)"]
+```
+
+۱. **تنظیمات در داشبورد Vercel:**
+   * ریپازیتوری را در Vercel ایمپورت کنید.
+   * مسیر ریشه (Root Directory): `apps/web-portal`
+   * فریم‌ورک انتخابی: `Next.js`
+   * متغیرهای محیطی:
+     ```env
+     NEXT_PUBLIC_API_URL=https://api.your-domain.com/api/v1
+     INTERNAL_API_URL=https://api.your-domain.com
+     NODE_ENV=production
+     ```
+
+۲. **دستور اجرای سرویس‌های بک‌اند در VPS:**
+   اجرای تمام سرویس‌ها به استثنای پورتال وب در کانتینر سرور لینوکس:
+   ```bash
+   docker compose up -d postgres redis core-api bot-service
+   ```
+
+---
+
+## ۸. مایگریشن‌های دیتابیس، Seeding و بکاپ‌گیری خودکار شبانه (Cron Job)
+
+### اجرای دستی مایگریشن‌ها
+```bash
+# اعمال آخرین مایگریشن‌های اسکیما برای elevator_db
+docker compose exec core-api alembic upgrade head
+
+# اعمال آخرین مایگریشن‌های اسکیما برای shopbot_db
+docker compose exec bot-service alembic upgrade head
+```
+
+### اسکریپت بکاپ‌گیری امن خودکار در هاست سرور
+یک اسکریپت امن و زمان‌بندی‌شده روی هاست VPS ایجاد نمایید:
+
+```bash
+sudo mkdir -p /opt/scripts /opt/backups
+sudo nano /opt/scripts/backup-databases.sh
+```
+
+محتوای اسکریپت:
+```bash
+#!/bin/bash
+set -e
+
+BACKUP_DIR="/opt/backups"
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+CONTAINER="elevator_postgres"
+DB_USER="postgres"
+
+mkdir -p "$BACKUP_DIR"
+
+# تهیه نسخه پشتیبان فشرده از elevator_db
+docker exec "$CONTAINER" pg_dump -U "$DB_USER" elevator_db | gzip > "$BACKUP_DIR/elevator_db_$TIMESTAMP.sql.gz"
+
+# تهیه نسخه پشتیبان فشرده از shopbot_db
+docker exec "$CONTAINER" pg_dump -U "$DB_USER" shopbot_db | gzip > "$BACKUP_DIR/shopbot_db_$TIMESTAMP.sql.gz"
+
+# نگهداری بکاپ‌های ۱۴ روز اخیر و حذف خودکار فایل‌های قدیمی‌تر
+find "$BACKUP_DIR" -type f -name "*.sql.gz" -mtime +14 -delete
+
+echo "[$TIMESTAMP] Databases backed up successfully to $BACKUP_DIR."
+```
+
+اعطای دسترسی اجرایی و تنظیم زمان‌بندی ساعت ۳:۰۰ بامداد در Crontab:
+```bash
+sudo chmod +x /opt/scripts/backup-databases.sh
+(crontab -l 2>/dev/null; echo "0 3 * * * /opt/scripts/backup-databases.sh >> /var/log/db_backup.log 2>&1") | crontab -
+```
+
+---
+
+## ۹. استانداردهای امنیتی و ایمن‌سازی سازمانی (Enterprise Security & Hardening)
+
+* **اجرای کانتینرها بدون روت (Unprivileged Execution):** کلیه کانتینرهای سرویس‌ها در بستری با دسترسی غیر از روت اجرا می‌شوند (`nonroot:appgroup` با شناسه کاربری 10001 در پایتون و `nextjs:nodejs` با شناسه 1001 در نود).
+* **ایزولاسیون شبکه داخلی (Network Isolation):** ارتباط میان سرویس‌ها، دیتابیس و ردیس از طریق شبکه محلی Bridge داکر (`elevator_network`) صورت می‌گیرد و پورت‌های دیتابیس بر روی شبکه عمومی مسدود می‌باشند.
+* **امنیت توکن‌ها و نشست‌ها:** توکن‌های دسترسی کوتاه‌مدت JWT مبتنی بر HMAC SHA-256 همراه با کوکی‌های امن HttpOnly و ضدانتقال CSRF.
+* **اعتبارسنجی دوطرفه و بهداشت ورودی‌ها:** بررسی دقیق کلیه ورودی‌ها با Pydantic v2 در لایه بک‌اند و Zod در لایه فرانت‌اند جهت مقابله با SQL Injection و XSS.
+* **وایت‌لیستینگ دقیق CORS:** محدودسازی صریح دامنه‌های مجاز در تنظیمات FastAPI و جلوگیری از درخواست‌های بین‌سایتی غیرمجاز.
+
+---
+
+## ۱۰. راهبری فنی و اطلاعات شرکت (Authors & Technical Governance)
+
+* **شرکت متبوع:** شرکت آسانرو اطمینان امیر کرمان (Asanro Etminan Amir Kerman)
+* **مدیریت و ریاست مهندسی:** مهندس محبی (Mohebbi) — `09133982695`
+* **مرجع رسمی ثبت و نظارت:** مجری رسمی استاندارد و بیمه آسانسور و پله‌برقی در استان کرمان
+* **معماری سیستم:** استانداردهای مهندسی مونو‌ریپو سازمانی (Antigravity Principal Engineering Standards)
+
+---
+
+<div align="center">
+  <a href="#top">⬆️ بازگشت به ابتدای صفحه</a> &nbsp; | &nbsp; <a href="#english-documentation">🇬🇧 Switch to English Documentation (مطالعه مستندات انگلیسی)</a>
+</div>
+
+---
+*توسعه‌یافته تحت استانداردهای مهندسی تجاری شرکت آسانرو اطمینان امیر کرمان. تمامی حقوق محفوظ است.*
