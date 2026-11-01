@@ -7,33 +7,29 @@
 <br/>
 <br/>
 
-# 🏢 Asanro Elevator Enterprise Ecosystem
-### Commercial-Grade, Event-Driven Monorepo Architecture
-**شرکت آسانرو اطمینان امیر کرمان | سیستم یکپارچه مهندسی، سرویس، نگهداری و استاندارد آسانسور**
+<h2>🌐 <a href="https://web-portal-ivory-nine.vercel.app/">VIEW LIVE PRODUCTION PORTAL</a></h2>
+
+---
+
+# Asanro Elevator Enterprise Ecosystem
+
+### *Commercial-Grade, Event-Driven Monorepo Architecture*
 
 <br/>
 
+[![PRODUCTION DEPLOYMENT](https://img.shields.io/badge/PRODUCTION_DEPLOYMENT-VERCEL_LIVE-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://web-portal-ivory-nine.vercel.app/)
 [![Next.js 14](https://img.shields.io/badge/Next.js_14-App_Router-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Flutter 3](https://img.shields.io/badge/Flutter_3-Cross--Platform-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/)
 [![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL_16-Dual_Engine-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Redis 7](https://img.shields.io/badge/Redis_7-Cache_&_Lock-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 [![Docker Compose](https://img.shields.io/badge/Docker-Compose_v3.8-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x_Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Python 3.12](https://img.shields.io/badge/Python-3.12_Slim-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
 <br/>
 <br/>
 
-<a href="https://web-portal-ivory-nine.vercel.app/" target="_blank">
-  <img src="https://img.shields.io/badge/PRODUCTION_DEPLOYMENT-VERCEL_LIVE-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel Live Deployment" />
-</a>
-<a href="https://web-portal-ivory-nine.vercel.app/" target="_blank">
-  <img src="https://img.shields.io/badge/VIEW_LIVE_DEMO-CUSTOMER_PORTAL-02569B?style=for-the-badge&logo=googlechrome&logoColor=white" alt="View Live Demo" />
-</a>
+**🇺🇸 [Read Documentation in English](#) &nbsp; | &nbsp; 🇮🇷 [مطالعه مستندات معماری به زبان فارسی](#)**
 
-<br/>
-<p><i>Access the Customer Web Portal & Storefront</i></p>
 <br/>
 
 </div>
