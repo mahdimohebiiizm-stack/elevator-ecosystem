@@ -53,7 +53,7 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl" className={`scroll-smooth ${vazirmatn.variable} ${vazirmatn.className}`}>
       <body
-        className={`${vazirmatn.className} font-sans min-h-screen bg-background text-foreground antialiased selection:bg-[#f59e0b] selection:text-slate-950 flex flex-col justify-between`}
+        className={`${vazirmatn.className} font-sans min-h-screen bg-background text-foreground antialiased selection:bg-[#f59e0b] selection:text-slate-950 flex flex-col justify-between overflow-x-hidden`}
       >
         <ElevatorPreloader />
         <Providers>
