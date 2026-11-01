@@ -1,6 +1,29 @@
+<div align="center">
+
+<a href="https://web-portal-ivory-nine.vercel.app/" target="_blank" rel="noopener noreferrer">
+  <img src="apps/web-portal/public/images/elevator-hero-luxury.jpg" alt="Asanro Elevator Enterprise Ecosystem - Live Demo" width="100%" />
+</a>
+
+<br/>
+<br/>
+
+[![Live Demo](https://img.shields.io/badge/🚀_LIVE_DEMO-web--portal--ivory--nine.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white&labelColor=0f172a)](https://web-portal-ivory-nine.vercel.app/)
+[![Vercel Deployment](https://img.shields.io/badge/Deployment-Live_on_Vercel-success?style=for-the-badge&logo=vercel&logoColor=white)](https://web-portal-ivory-nine.vercel.app/)
+
+<p align="center">
+  <a href="https://web-portal-ivory-nine.vercel.app/" target="_blank" rel="noopener noreferrer">
+    <b>🔗 مشاهده پیش‌نمایش زنده وب‌پورتال (Live Production Preview): https://web-portal-ivory-nine.vercel.app/</b>
+  </a>
+</p>
+
+</div>
+
+---
+
 # Asanro Elevator Enterprise Ecosystem (Monorepo)
 > **Commercial-Grade, Highly Scalable, and Secure Enterprise Architecture for "Asanro Etminan Amir Kerman" (شرکت آسانرو اطمینان امیر کرمان)**
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-web--portal--ivory--nine.vercel.app-blue?logo=vercel)](https://web-portal-ivory-nine.vercel.app/)
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?logo=next.js)](https://nextjs.org/)
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -180,9 +203,9 @@ docker compose down -v
 
 ## 5. Port Mappings & Service Endpoints
 
-| Service | Container Name | Host Port | Internal Port | Protocol | Local Access Point |
+| Service | Container Name | Host Port | Internal Port | Protocol | Local & Live Access Points |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Web Portal (Next.js)** | `elevator_web_portal` | `3000` | `3000` | HTTP | [http://localhost:3000](http://localhost:3000) |
+| **Web Portal (Next.js)** | `elevator_web_portal` | `3000` | `3000` | HTTP | [http://localhost:3000](http://localhost:3000) <br/> **🚀 Live Demo:** [https://web-portal-ivory-nine.vercel.app/](https://web-portal-ivory-nine.vercel.app/) |
 | **Bot Service & Storefront** | `elevator_bot_service` | `8000` | `8000` | HTTP | [http://localhost:8000/api/v1/docs](http://localhost:8000/api/v1/docs) |
 | **Core Operational API** | `elevator_core_api` | `8001` | `8000` | HTTP | [http://localhost:8001/docs](http://localhost:8001/docs) |
 | **PostgreSQL Database** | `elevator_postgres` | `5432` | `5432` | TCP | `localhost:5432` (`elevator_db`, `shopbot_db`) |
@@ -250,6 +273,7 @@ flutter run
 ### Option A: Frontend on Vercel + Backends on Linux VPS
 
 #### 1. Vercel Frontend Configuration
+* **Deployed Live Preview:** [https://web-portal-ivory-nine.vercel.app/](https://web-portal-ivory-nine.vercel.app/)
 1. Import the Git repository in Vercel.
 2. Set **Root Directory** to `apps/web-portal`.
 3. Framework Preset: **Next.js**.
