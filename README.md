@@ -23,10 +23,17 @@
 [![Python 3.12](https://img.shields.io/badge/Python-3.12_Slim-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
 <br/>
+<br/>
 
-  <h3><a href="https://web-portal-ivory-nine.vercel.app/">🚀 View Live Production Demo</a></h3>
-  <p><i>Access the Customer Web Portal & Storefront</i></p>
+<a href="https://web-portal-ivory-nine.vercel.app/" target="_blank">
+  <img src="https://img.shields.io/badge/PRODUCTION_DEPLOYMENT-VERCEL_LIVE-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel Live Deployment" />
+</a>
+<a href="https://web-portal-ivory-nine.vercel.app/" target="_blank">
+  <img src="https://img.shields.io/badge/VIEW_LIVE_DEMO-CUSTOMER_PORTAL-02569B?style=for-the-badge&logo=googlechrome&logoColor=white" alt="View Live Demo" />
+</a>
 
+<br/>
+<p><i>Access the Customer Web Portal & Storefront</i></p>
 <br/>
 
 </div>
