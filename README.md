@@ -578,7 +578,7 @@ sudo chmod +x /opt/scripts/backup-databases.sh
 * **Enterprise:** شرکت آسانرو اطمینان امیر کرمان (Asanro Etminan Amir Kerman)
 * **Management & Engineering Director:** مهندس محبی (Mohebbi) — `09133982695`
 * **Official Registry:** مجری رسمی استاندارد و بیمه آسانسور و پله‌برقی در استان کرمان
-* **Architecture:** Enterprise Monorepo Architecture Specification (Antigravity Principal Engineering Standards)
+* **Architecture:** Enterprise Monorepo Architecture Specification (Asanro Elevator Enterprise Engineering Standards)
 
 ---
 *Maintained under standard commercial enterprise licensing. All rights reserved.*
@@ -1093,7 +1093,7 @@ sudo chmod +x /opt/scripts/backup-databases.sh
 * **شرکت متبوع:** شرکت آسانرو اطمینان امیر کرمان (Asanro Etminan Amir Kerman)
 * **مدیریت و ریاست مهندسی:** مهندس محبی (Mohebbi) — `09133982695`
 * **مرجع رسمی ثبت و نظارت:** مجری رسمی استاندارد و بیمه آسانسور و پله‌برقی در استان کرمان
-* **معماری سیستم:** استانداردهای مهندسی مونو‌ریپو سازمانی (Antigravity Principal Engineering Standards)
+* **معماری سیستم:** استانداردهای مهندسی مونو‌ریپو سازمانی (استانداردهای مهندسی آسانرو - Asanro Elevator Enterprise Standards)
 
 ---
 
